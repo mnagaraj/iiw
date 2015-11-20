@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Facebook Login JavaScript Example</title>
+<meta charset="UTF-8">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script> 
+<script type="text/javascript" scr="when.js"></script>
+</meta>
+</head>
+<body>
+<script>
+  // This is called with the results from from FB.getLoginStatus().
+  var accessToken;
+  var id=new Array();
+  var temp1=new Array();
+  var restaurants=new Array();
+  var flag=0;
+  function statusChangeCallback(response) {
+    console.log('statusChangeCallback');
+    console.log(response);
+    // The response object is returned with a status field that lets the
+    // app know the current login status of the person.
+    // Full docs on the response object can be found in the documentation
+    // for FB.getLoginStatus().
+    if (response.status === 'connected') {
+      // Logged into your app and Facebook.
+        accessToken = response.authResponse.accessToken;
+        //alert(accessToken);
+        
+       // console.log("entered");
+        //testAPI(testAPI_next);
+
+       testAPI(function() {
+          //console.log(temp1);
+          testAPI_next(temp1,function() {
+            //console.log(id);
+            testAPI_again(id,function() {
+              //console.log(restaurants);
+              callserver(function() {
+                // you get the idea
+              });
+            });
+          });
+        });  
+
+        /*testAPI()
+                .then(testAPI_next)
+                .then(testAPI_again)
+                .then(callserver);*/
+
+      
+    } else if (response.status === 'not_authorized') {
+      // The person is logged into Facebook, but not your app.
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into this app.';
+    } else {
+      // The person is not logged into Facebook, so we're not sure if
+      // they are logged into this app or not.
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into Facebook.';
+    }
+  }
+
+  // This function is called when someone finishes with the Login
+  // Button.  See the onlogin handler attached to it in the sample
+  // code below.
+  function checkLoginState() {
+    FB.getLoginStatus(function(response) {
+        statusChangeCallback(response);
+    });
+  }
+
+  window.fbAsyncInit = function() {
+  FB.init({
+    appId      : '449815385209271',
+    cookie     : true,  // enable cookies to allow the server to access 
+                        // the session
+    xfbml      : true,  // parse social plugins on this page
+    version    : 'v2.2' // use version 2.2
+  });
+
+  // Now that we've initialized the JavaScript SDK, we call 
+  // FB.getLoginStatus().  This function gets the state of the
+  // person visiting this page and can return one of three states to
+  // the callback you provide.  They can be:
+  //
+  // 1. Logged into your app ('connected')
+  // 2. Logged into Facebook, but not your app ('not_authorized')
+  // 3. Not logged into Facebook and can't tell if they are logged into
+  //    your app or not.
+  //
+  // These three cases are handled in the callback function.
+
+  FB.getLoginStatus(function(response) {
+
+      statusChangeCallback(response);
+    
+  });
+
+  };
+
+  // Load the SDK asynchronously
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+
+  // Here we run a very simple test of the Graph API after login is
+  // successful.  See statusChangeCallback() for when this call is made.
+  function testAPI(callback) {
+    //var deferred = when.defer();    
+    console.log('Welcome!  Fetching your information.... ');
+    /*FB.api('/me', function(response) {
+      console.log('Successful login for: ' + response.name);
+      document.getElementById('status').innerHTML =
+        'Thanks for logging in, ' + response.name + '!';
+    });*/
+
+    FB.api(
+  '/me',
+  'GET',
+  {"fields":"name,posts.with(location)"},
+  function(response) {
+      // Insert your code here
+      //var item=jQuery.parseJSON(JSON.stringify(response.posts));
+      //document.getElementById('status').innerHTML = item;
+      //alert(response);
+
+      console.log('Successful login for: ' + response.name);
+      document.getElementById('status').innerHTML =
+        'Thanks for logging in, ' + response.name + '!';
+
+      for (var i=0, l=response.posts.data.length; i<l; i++) {
+          var post = response.posts.data[i];
+          console.log(post);
+          console.log(post.story);
+          var str1=post.story;
+          var temp= new Array();
+          temp=str1.split(" ");
+          var str3='';
+          for(var m=temp.length;m>=0;m--)
+          {
+              if(temp[m-1][0] === temp[m-1][0].toUpperCase() )
+              {
+                  var len=temp[m-1].length;
+                  if(temp[m-1][len-1]==='.' || temp[m-1][len-1]===',')
+                  {
+                    str2=temp[m-1].slice(0,-1);
+                    str3 +=' ' +str2;
+                    console.log(str2);
+                  }
+                  else
+                  {
+                    str3 += ' ' + temp[m-1];
+                    console.log(temp[m-1]);
+                  }
+              }
+
+              else
+              {
+                console.log('going out:'+temp[m-1]);
+                break;
+              }
+          }
+
+          var reversed = str3.split(' ').reverse().join(' ');
+          temp1[i]=reversed.trim();
+          console.log(reversed.trim());
+          
+          //alert(response.posts.data[i].story);
+          if (post.message) {
+             console.log('Message: ' + post.message);
+          } else if (post.attachment && post.attachment.name) {
+             console.log('Attachment: ' + post.attachment.name);
+          }
+
+
+       }
+       
+          //callback(temp1,testAPI_again);
+          
+          callback();
+   
+        }
+
+);
+
+ //return deferred.promise;
+ // callback();
+  
+  }
+
+  function testAPI_next(temp1,callback) {
+
+  //console.log("here"+temp1.length);
+  //var deferred = when.defer();
+  var j=0;
+    for (var i=0;i<temp1.length;i++)
+    {
+    var urlCall = "/search?q="+temp1[i]+"&type=page";
+    console.log(urlCall);
+    FB.api(  urlCall,  function(response) { 
+        str1=response.data[0].id;    
+        //console.log(j,str1);  
+        id[j++]=str1;
+        //callback(id,callserver);
+        callback();
+    }); 
+
+    //callback();
+    
+  }
+
+    //console.log(id);
+   // console.log(id[1]);
+    //console.log(id[2]);
+    //return deferred.promise;
+  
+  }
+
+   function testAPI_again(id,callback) {
+
+    //var deferred = when.defer();
+    //console.log("here again"+id.length);
+    var j=0;
+    for (var i=0;i<id.length;i++)
+    {
+        FB.api(id[i],  'GET',  {"fields":"category"},
+  function(response) {
+      var str2=response.category;
+      if(str2.indexOf("Food") >-1 || str2.indexOf("beverages") >-1 || str2.indexOf("grocery") >-1 || str2.indexOf("Restaurant") >-1 || str2.indexOf("Cafe") >-1 || str2.indexOf("Hotel") >-1)
+      {
+          restaurants[j]=temp1[j];
+          console.log(j,str2,temp1[j]);
+          j++;
+          //console.log(j,str2,temp1[j-1]);
+      }   
+      
+      callback();
+    }
+    );
+
+   }
+
+   //callback();
+   //return deferred.promise;
+ }
+
+ function callserver()
+ {
+    //var deferred = when.defer();
+    if(flag){return;}
+    else{flag=1;}
+    console.log(id);
+    console.log(restaurants);
+    var request = $.ajax({
+    url: "http://localhost/info.php",
+    data: { names: restaurants },
+    type     : "POST",
+    dataType: "json",
+    success  : function(data) {
+              //item=jQuery.parseJSON(JSON.stringify(data));
+              alert(data);},
+    error: function(xhr, status, error) {alert(error);}
+            
+});
+    //return deferred.promise;
+ }
+
+  /* make the API call */
+
+</script>
+
+<!-- <script type="text/javascript">
+
+var accessToken;
+
+//$("document").ready(function(){
+
+  //alert('Here');
+
+  function fbstuff(){
+alert(accessToken);
+$("#call").submit(function(){
+
+  
+               //  $('#realestate').preventDefault();
+  $.ajax({
+      
+      type     : "POST",
+      dataType: "jsonp",
+      //url      : $('#myForm').attr('action'),
+      //url : 'https://graph.facebook.com/me/checkins?449815385209271=CAAGZAGs4ZCZBbcBADFNbQU2VxCoUAv5WVyJGcYSCZBs2gYGJajB80vDZCttUaZBCchYJaIM6YZAYOXVs0uCR6lUuoRw4b9KloXfkdCmOr1uJZCPdRZAI7RGiHaaZBaO91zimCpnmcGfgs9v1MmkpPrTeoXtKU1AEvBZCGefPLzdlMm5doMRcXSA7y0oUtUpEqxZBDd5p1KnZBag4i9PJenQKYMuYx',
+      //url : $('#AccessToken').text(),
+      //url : 'https://graph.facebook.com/me?fields=birthday?access_token='+accessToken,
+
+      url : 'https://graph.facebook.com/v2.2/me?fields=name?access_token=accessToken',
+      //data : $('#call').serialize(),
+
+      /*data: JSON.stringify({
+            //url: 'https://www.facebook.com/images/fb_icon_325x325.png',
+            access_token: accessToken
+        }),*/
+
+      success  : function(data) {
+              item=jQuery.parseJSON(JSON.stringify(data));
+        alert(item)},
+      error: function(xhr, status, error) {alert(error)}
+            });
+      return false;   
+    });
+
+  }
+
+
+</script> -->
+
+<!--
+  Below we include the Login Button social plugin. This button uses
+  the JavaScript SDK to present a graphical Login button that triggers
+  the FB.login() function when clicked.
+-->
+
+<fb:login-button scope="public_profile,email" autologoutlink="true" onlogin="checkLoginState();">
+</fb:login-button>
+
+<div id="status">
+</div>
+
+<!-- <fb:login-button  autologoutlink="true"></fb:login-button> -->
+
+
+
+</body>
+</html>
