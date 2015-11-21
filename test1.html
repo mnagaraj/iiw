@@ -28,20 +28,67 @@
         //alert(accessToken);
         
        // console.log("entered");
-        //testAPI(testAPI_next);
-
-       testAPI(function() {
-          //console.log(temp1);
-          testAPI_next(temp1,function() {
-            //console.log(id);
-            testAPI_again(id,function() {
-              //console.log(restaurants);
-              callserver(function() {
-                // you get the idea
+        testAPI(function(){
+          testAPI_next(temp1,function(){
+            testAPI_again(id,function(){
+              callserver(function(){
+                  console.log("donw");
               });
             });
           });
-        });  
+        });
+
+       /*testAPI(function() {
+          //console.log(temp1);
+          if(temp1.length > 0)
+          {
+              console.log("main: "+temp1);
+              setTimeout(function(){
+    //do what you need here
+}, 10);
+              testAPI_next(temp1,function() {
+              //console.log(id);
+                if(id.length > 0)
+                {
+                  console.log("main: "+id);
+                  setTimeout(function(){
+    //do what you need here
+}, 50);
+                  testAPI_again(id,function() {
+                  //console.log(restaurants);
+                    if(restaurants.length > 0)
+                    {
+                      console.log("main: "+restaurants);
+                      setTimeout(function(){
+    //do what you need here
+}, 100);
+                      callserver(function() {
+                      // you get the idea
+                      });
+                    }
+                });
+              }
+            });
+          }
+        });*/
+
+       // $.when(testAPI()).then(testAPI_next(temp1));
+        //$.when(testAPI_next(temp1)).then(testAPI_again(id));
+
+      /*async.series([
+          function(callback) {
+            testAPI(function(temp1){
+              callback(null, temp1);
+            });
+        },
+          function(callback) {
+            var id = testAPI_next();
+              callback(ull, id);
+        }
+      ],
+      function(err, results) {
+        console.log('Yay');
+      });*/
 
         /*testAPI()
                 .then(testAPI_next)
@@ -112,12 +159,15 @@
   // successful.  See statusChangeCallback() for when this call is made.
   function testAPI(callback) {
     //var deferred = when.defer();    
+    //var temp1=new Array();
     console.log('Welcome!  Fetching your information.... ');
     /*FB.api('/me', function(response) {
       console.log('Successful login for: ' + response.name);
       document.getElementById('status').innerHTML =
         'Thanks for logging in, ' + response.name + '!';
     });*/
+
+    dfd = new $.Deferred();
 
     FB.api(
   '/me',
@@ -128,7 +178,7 @@
       //var item=jQuery.parseJSON(JSON.stringify(response.posts));
       //document.getElementById('status').innerHTML = item;
       //alert(response);
-
+      dfd.resolve();
       console.log('Successful login for: ' + response.name);
       document.getElementById('status').innerHTML =
         'Thanks for logging in, ' + response.name + '!';
@@ -182,11 +232,14 @@
        
           //callback(temp1,testAPI_again);
           
-          callback();
+          //callback();
+          dfd.done(function(){ alert("done with first"+temp1); callback(temp1); });
    
         }
 
 );
+
+  
 
  //return deferred.promise;
  // callback();
@@ -197,27 +250,36 @@
 
   //console.log("here"+temp1.length);
   //var deferred = when.defer();
+  dfd1 = new $.Deferred();
   var j=0;
     for (var i=0;i<temp1.length;i++)
     {
+      
     var urlCall = "/search?q="+temp1[i]+"&type=page";
-    console.log(urlCall);
+    //console.log(urlCall);
     FB.api(  urlCall,  function(response) { 
+        dfd1.resolve();
         str1=response.data[0].id;    
         //console.log(j,str1);  
         id[j++]=str1;
         //callback(id,callserver);
-        callback();
+        //callback();
+    
+
+        
     }); 
 
     //callback();
-    
+
   }
 
     //console.log(id);
    // console.log(id[1]);
     //console.log(id[2]);
     //return deferred.promise;
+
+    dfd1.done(function(){ alert("done with next"+id); callback(id); });
+
   
   }
 
@@ -225,26 +287,34 @@
 
     //var deferred = when.defer();
     //console.log("here again"+id.length);
+    dfd2 = new $.Deferred();
     var j=0;
     for (var i=0;i<id.length;i++)
     {
+        
         FB.api(id[i],  'GET',  {"fields":"category"},
   function(response) {
+      dfd2.resolve();
       var str2=response.category;
       if(str2.indexOf("Food") >-1 || str2.indexOf("beverages") >-1 || str2.indexOf("grocery") >-1 || str2.indexOf("Restaurant") >-1 || str2.indexOf("Cafe") >-1 || str2.indexOf("Hotel") >-1)
       {
           restaurants[j]=temp1[j];
-          console.log(j,str2,temp1[j]);
+          //console.log(j,str2,temp1[j]);
           j++;
           //console.log(j,str2,temp1[j-1]);
       }   
       
-      callback();
+      //callback();
+      
+
     }
+
     );
 
+        
    }
 
+   dfd2.done(setTimeout(function(){ alert("done with again"+restaurants); callback(); },150));
    //callback();
    //return deferred.promise;
  }
@@ -252,18 +322,23 @@
  function callserver()
  {
     //var deferred = when.defer();
-    if(flag){return;}
-    else{flag=1;}
+    /*if(flag){return;}
+    else{flag=1;}*/
     console.log(id);
-    console.log(restaurants);
+    //alert(id);
+    //alert(restaurants);
+    //console.log(JSON.stringify(restaurants));
     var request = $.ajax({
-    url: "http://localhost/info.php",
-    data: { names: restaurants },
-    type     : "POST",
+    url: "http://localhost/myspider/myspider/iiw/info2.php",
+    type     : "GET",
     dataType: "json",
-    success  : function(data) {
-              //item=jQuery.parseJSON(JSON.stringify(data));
-              alert(data);},
+    success  : function(data,status) {
+              //item=jQuery.parseJSON(data);
+              item=jQuery.parseJSON(JSON.stringify(data));
+              console.log(item);
+              console.log(status);
+              //alert(data);
+            },
     error: function(xhr, status, error) {alert(error);}
             
 });
