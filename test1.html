@@ -330,6 +330,7 @@
     //console.log(JSON.stringify(restaurants));
     var request = $.ajax({
     url: "http://localhost/myspider/myspider/iiw/info2.php",
+    data: { names: "Redbird" },
     type     : "GET",
     dataType: "json",
     success  : function(data,status) {
