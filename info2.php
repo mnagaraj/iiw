@@ -110,6 +110,25 @@ $obj->{'reviews'} = "";
 
 $obj->{'snippet_text'} = "";
 
+$str=$obj->{'url'};
+
+list($one,$two,$three,$four,$five)=explode('/',$str);
+$value = "http://www.yelp.com/biz_photos/".$five."?tab=food";
+
+$item="scrapy crawl dinedeals -a restaurant=".$value;
+//$item=escapeshellcmd("/usr/bin/python /var/www/html/myspider/myspider/iiw/try.py");
+$o=array();
+$o=exec($item,$arr1,$ret);
+$array=explode(",",$o);
+$temp_store=array();
+for($i=0;$i<sizeof($array);$i++)
+{
+$val=explode("'",$array[$i]);
+array_push($temp_store,"http:".$val[1]);
+}
+
+$obj->{'images_food'}=$temp_store;
+
 $output=json_encode($obj);
 echo $output;
 
@@ -122,7 +141,14 @@ $longopts = array(
 "location::",
 );
 $options = getopt("", $longopts);
-$term = '';
-$location = '';
+if(isset($_GET['names']))
+{
+	$restaurant = $_GET['names'];
+  	$term = $restaurant;
+}
+	
+
+//$term = '';
+$location = 'Los Angeles,CA';
 query_api($term, $location);
 ?>
