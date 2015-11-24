@@ -4,7 +4,7 @@
 <title>Facebook Login JavaScript Example</title>
 <meta charset="UTF-8">
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script> 
-<script type="text/javascript" scr="when.js"></script>
+<script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDLFVJsXeQPBJX4aEyGI_nU3nfdqCKBiUg"></script>
 </meta>
 </head>
 <body>
@@ -14,7 +14,10 @@
   var id=new Array();
   var temp1=new Array();
   var restaurants=new Array();
+  var items=new Array();
   var flag=0;
+  var stuff=new Array();
+  //var myrest=new Object();
   function statusChangeCallback(response) {
     console.log('statusChangeCallback');
     console.log(response);
@@ -29,13 +32,22 @@
         
        // console.log("entered");
         testAPI(function(){
+          console.log(temp1);
+          setTimeout(
           testAPI_next(temp1,function(){
+            console.log(id);
+              setTimeout(
             testAPI_again(id,function(){
-              callserver(function(){
-                  console.log("donw");
-              });
-            });
-          });
+              console.log(restaurants);
+              setTimeout(
+              callserver(restaurants,function(){
+                  //console.log("donw");
+                  setTimeout(
+                    unwrap(),200);
+              })
+              ,200);
+            }),200);
+          }),200);
         });
 
        /*testAPI(function() {
@@ -233,7 +245,7 @@
           //callback(temp1,testAPI_again);
           
           //callback();
-          dfd.done(function(){ alert("done with first"+temp1); callback(temp1); });
+          dfd.done(setTimeout(function(){ alert("done"+temp1); callback(temp1); },150));
    
         }
 
@@ -278,7 +290,7 @@
     //console.log(id[2]);
     //return deferred.promise;
 
-    dfd1.done(function(){ alert("done with next"+id); callback(id); });
+    dfd1.done(setTimeout(function(){ alert("done with next"+id); callback(id); },150));;
 
   
   }
@@ -314,28 +326,33 @@
         
    }
 
-   dfd2.done(setTimeout(function(){ alert("done with again"+restaurants); callback(); },150));
-   //callback();
+   dfd2.done(setTimeout(function(){ alert("done with again"+restaurants); callback(restaurants); },150));
+   //dfd2.done(function(){ alert("done with again"+restaurants); callback(restaurants); });
+   
    //return deferred.promise;
  }
 
- function callserver()
+ function callserver(restaurants,callback)
  {
     //var deferred = when.defer();
     /*if(flag){return;}
     else{flag=1;}*/
-    console.log(id);
+    //console.log(restaurants);
     //alert(id);
     //alert(restaurants);
     //console.log(JSON.stringify(restaurants));
+    var promises=[];
+    $.each(restaurants, function (i,part) {
+      console.log("part:"+part);
     var request = $.ajax({
     url: "http://localhost/myspider/myspider/iiw/info2.php",
-    data: { names: "Redbird" },
+    data: { names: part },
     type     : "GET",
     dataType: "json",
     success  : function(data,status) {
               //item=jQuery.parseJSON(data);
               item=jQuery.parseJSON(JSON.stringify(data));
+              items[i]=item;
               console.log(item);
               console.log(status);
               //alert(data);
@@ -343,56 +360,125 @@
     error: function(xhr, status, error) {alert(error);}
             
 });
+    promises.push( request);
+  })
     //return deferred.promise;
+    $.when.apply(null, promises).done(function(){
+
+       alert('All done');
+       callback();
+  })
+ }
+
+ function unwrap()
+ {
+    //console.log(items[0]);
+    for(var i=0;i<items.length;i++)
+    {
+      stuff[i]=new Object();
+      stuff[i].name=items[i].name;
+      stuff[i].category=items[i].categories;
+      stuff[i].phone=items[i].display_phone;
+      stuff[i].food_img=items[i].images_food[0];
+      stuff[i].isclosed=items[i].is_closed;
+      stuff[i].lat=items[i].location.coordinate.latitude;
+      stuff[i].longi=items[i].location.coordinate.longitude;
+      //myrest.address=items[i].location.display_address[0]+items[i].location.display_address[0]+items[i].location.display_address[0];
+    }
+
+    console.log(stuff);
  }
 
   /* make the API call */
 
 </script>
 
-<!-- <script type="text/javascript">
+<script>
 
-var accessToken;
+$(document).ready(function(){
+    $('#show-map').on('click',initialize)
+});
 
-//$("document").ready(function(){
+function initialize() {
+  var mapProp = {
+    //center:new google.maps.LatLng(39.5, -98.35),
+    center:new google.maps.LatLng(34.052, -118.243),
+    zoom:3,
+    mapTypeId:google.maps.MapTypeId.ROADMAP
+  };
+  var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 
-  //alert('Here');
+  setMarkers(map);
+  //autoCenter();
+}
 
-  function fbstuff(){
-alert(accessToken);
-$("#call").submit(function(){
+function setMarkers(map) {
 
+  var infowindow = new google.maps.InfoWindow({
+      maxWidth: 160
+    });
+  //var infoWindow = new google.maps.InfoWindow();
+  var markers=new Array();
   
-               //  $('#realestate').preventDefault();
-  $.ajax({
+  for (var i = 0; i < stuff.length; i++) {
+    //var resto = stuff[i];
+
       
-      type     : "POST",
-      dataType: "jsonp",
-      //url      : $('#myForm').attr('action'),
-      //url : 'https://graph.facebook.com/me/checkins?449815385209271=CAAGZAGs4ZCZBbcBADFNbQU2VxCoUAv5WVyJGcYSCZBs2gYGJajB80vDZCttUaZBCchYJaIM6YZAYOXVs0uCR6lUuoRw4b9KloXfkdCmOr1uJZCPdRZAI7RGiHaaZBaO91zimCpnmcGfgs9v1MmkpPrTeoXtKU1AEvBZCGefPLzdlMm5doMRcXSA7y0oUtUpEqxZBDd5p1KnZBag4i9PJenQKYMuYx',
-      //url : $('#AccessToken').text(),
-      //url : 'https://graph.facebook.com/me?fields=birthday?access_token='+accessToken,
+      //console.log(contentString);
+      //console.log(stuff.length+"i="+i);
 
-      url : 'https://graph.facebook.com/v2.2/me?fields=name?access_token=accessToken',
-      //data : $('#call').serialize(),
-
-      /*data: JSON.stringify({
-            //url: 'https://www.facebook.com/images/fb_icon_325x325.png',
-            access_token: accessToken
-        }),*/
-
-      success  : function(data) {
-              item=jQuery.parseJSON(JSON.stringify(data));
-        alert(item)},
-      error: function(xhr, status, error) {alert(error)}
-            });
-      return false;   
+      var marker = new google.maps.Marker({
+      position: {lat: stuff[i].lat, lng: stuff[i].longi},
+      map: map,
+      title: stuff[i].name
+      //zIndex: beach[3]
     });
 
+      markers.push(marker);
+
+      google.maps.event.addListener(marker, 'click', (function(marker, i) {
+        return function() {
+          var contentString = '<div id="content">'+'<h1>'+stuff[i].name+'<p><b>'+stuff[i].phone+'</p></b>'+'</div>';
+          console.log("here:"+contentString);
+          console.log("i="+i);
+          infowindow.setContent(contentString);
+          infowindow.open(map, marker);
+        }
+      })(marker, i));
+    
   }
 
+}
 
-</script> -->
+/*function autoCenter() {
+      //  Create a new viewpoint bound
+      var bounds = new google.maps.LatLngBounds();
+      //  Go through each...
+      for (var i = 0; i < markers.length; i++) {  
+        bounds.extend(markers[i].position);
+      }
+      //  Fit these bounds to the map
+      map.fitBounds(bounds);
+    }
+*/
+
+</script>
+
+<!-- <script type="text/javascript">
+
+var map;
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: -34.397, lng: 150.644},
+    zoom: 8
+  });
+}
+
+</script>
+
+<script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLFVJsXeQPBJX4aEyGI_nU3nfdqCKBiUg&callback=initMap">
+</script>-->
 
 <!--
   Below we include the Login Button social plugin. This button uses
@@ -406,7 +492,12 @@ $("#call").submit(function(){
 <div id="status">
 </div>
 
+<button id="show-map" onclick="initialize();">GET ME MY DEALS!!!</button>
+
+<div id="googleMap" style="width:500px;height:380px;"></div>
+
 <!-- <fb:login-button  autologoutlink="true"></fb:login-button> -->
+
 
 
 
