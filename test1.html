@@ -17,6 +17,11 @@
   var items=new Array();
   var flag=0;
   var stuff=new Array();
+  var category=new Array();
+  var city=new Array();
+  var state=new Array();
+  var type=new Array();
+  var loc=new Array();
   //var myrest=new Object();
   function statusChangeCallback(response) {
     console.log('statusChangeCallback');
@@ -35,18 +40,16 @@
           console.log(temp1);
           setTimeout(
           testAPI_next(temp1,function(){
-            console.log(id);
-              setTimeout(
-            testAPI_again(id,function(){
-              console.log(restaurants);
+            console.log(restaurants);
+            console.log(loc);
+            console.log(category);
+            console.log(type);
               setTimeout(
               callserver(restaurants,function(){
                   //console.log("donw");
                   setTimeout(
-                    unwrap(),200);
-              })
-              ,200);
-            }),200);
+                    unwrap(),400);
+              }),200)
           }),200);
         });
 
@@ -203,7 +206,21 @@
           var temp= new Array();
           temp=str1.split(" ");
           var str3='';
-          for(var m=temp.length;m>=0;m--)
+
+          var index=str1.indexOf('at');
+          for(var n=(index+3);n<(str1.length);n++)
+          {
+              
+              str3 += str1[n];
+          }
+        
+          str3 = str3.replace(/\.$/, "");
+          temp1[i]=str3.trim();
+          console.log(str3);
+          
+          
+
+          /*for(var m=temp.length;m>=0;m--)
           {
               if(temp[m-1][0] === temp[m-1][0].toUpperCase() )
               {
@@ -230,7 +247,7 @@
 
           var reversed = str3.split(' ').reverse().join(' ');
           temp1[i]=reversed.trim();
-          console.log(reversed.trim());
+          console.log(reversed.trim());*/
           
           //alert(response.posts.data[i].story);
           if (post.message) {
@@ -263,23 +280,46 @@
   //console.log("here"+temp1.length);
   //var deferred = when.defer();
   dfd1 = new $.Deferred();
-  var j=0;
+  //var j=0;
     for (var i=0;i<temp1.length;i++)
     {
       
-    var urlCall = "/search?q="+temp1[i]+"&type=page";
+    var urlCall = "/search?q="+temp1[i]+"&type=place";
     //console.log(urlCall);
+    (function() {
+      var j=i;
     FB.api(  urlCall,  function(response) { 
+
         dfd1.resolve();
-        str1=response.data[0].id;    
+        //str1=response.data[0].id;    
+        var str1=response.data[0].category;
+        var str2=response.data[0].category_list[0].name;
         //console.log(j,str1);  
-        id[j++]=str1;
+         if(str1.indexOf("Food") >-1 || str1.indexOf("beverages") >-1 || str1.indexOf("grocery") >-1 || str1.indexOf("Restaurant") >-1 || str1.indexOf("Cafe") >-1 || str1.indexOf("Hotel") >-1 || str2.indexOf("Restaurant") > -1 || str2.indexOf("Bar") > -1 || str2.indexOf("Grill") >-1 )
+        {
+          category[j]=response.data[0].category;
+          city[j]=response.data[0].location.city;
+          state[j]=response.data[0].location.state;
+          loc[j]=city[j]+','+state[j];
+          type[j]=response.data[0].category_list[0].name;
+          console.log(j,category[j],city[j],state[j],type[j]);
+          restaurants[j]=temp1[j];
+          //console.log(j,restaurants[j],category[j],city[j],state[j],type[j]);
+          j++;
+          //console.log(j,str2,temp1[j-1]);
+        }   
+
+      
+
+        //restaurants[j++]=str1;
         //callback(id,callserver);
         //callback();
     
 
         
-    }); 
+    });
+
+    })(); 
 
     //callback();
 
@@ -290,12 +330,12 @@
     //console.log(id[2]);
     //return deferred.promise;
 
-    dfd1.done(setTimeout(function(){ alert("done with next"+id); callback(id); },150));;
+    dfd1.done(setTimeout(function(){ alert("done with next"+restaurants); callback(restaurants); },300));
 
   
   }
 
-   function testAPI_again(id,callback) {
+   /*function testAPI_again(id,callback) {
 
     //var deferred = when.defer();
     //console.log("here again"+id.length);
@@ -330,7 +370,7 @@
    //dfd2.done(function(){ alert("done with again"+restaurants); callback(restaurants); });
    
    //return deferred.promise;
- }
+ }*/
 
  function callserver(restaurants,callback)
  {
@@ -342,11 +382,19 @@
     //alert(restaurants);
     //console.log(JSON.stringify(restaurants));
     var promises=[];
+    //var objs=new Array();
     $.each(restaurants, function (i,part) {
-      console.log("part:"+part);
+
+      //console.log("part:"+part);
+      //objs[i]=new Object();
+      //objs[i].rest=part;
+      //var str1=city[i]+','+state[i];
+      //objs[i].stcy=str1;
+      console.log("part:"+restaurants[i]+" i:"+i+" loc:"+loc[i]);
     var request = $.ajax({
-    url: "http://localhost/myspider/myspider/iiw/info2.php",
-    data: { names: part },
+    url: "http://localhost/myspider/myspider/iiw/info.php",
+    data: { names: part,loc: loc[i] },
+    //data: JSON.stringify(objs[i]),
     type     : "GET",
     dataType: "json",
     success  : function(data,status) {
@@ -379,10 +427,19 @@
       stuff[i].name=items[i].name;
       stuff[i].category=items[i].categories;
       stuff[i].phone=items[i].display_phone;
-      stuff[i].food_img=items[i].images_food[0];
+      //stuff[i].food_img=items[i].images_food[0];
       stuff[i].isclosed=items[i].is_closed;
       stuff[i].lat=items[i].location.coordinate.latitude;
       stuff[i].longi=items[i].location.coordinate.longitude;
+      stuff[i].image_url1=items[i].information.yipit1._values.image_url;
+      stuff[i].image_url0=items[i].information.yipit0._values.image_url;
+      stuff[i].details0=items[i].information.yipit0._values.details;
+      stuff[i].details1=items[i].information.yipit1._values.details;
+      stuff[i].title0=items[i].information.yipit0._values.title;
+      stuff[i].title1=items[i].information.yipit1._values.title;
+      stuff[i].url0=items[i].information.yipit0._values.url;
+      stuff[i].url1=items[i].information.yipit1._values.url;
+      stuff[i].food_image=items[i].information.image_urls[0];
       //myrest.address=items[i].location.display_address[0]+items[i].location.display_address[0]+items[i].location.display_address[0];
     }
 
@@ -396,10 +453,11 @@
 <script>
 
 $(document).ready(function(){
-    $('#show-map').on('click',initialize)
+    $('#show-map').on('click',initialize);
 });
 
 function initialize() {
+
   var mapProp = {
     //center:new google.maps.LatLng(39.5, -98.35),
     center:new google.maps.LatLng(34.052, -118.243),
