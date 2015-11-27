@@ -6,8 +6,29 @@
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script> 
 <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDLFVJsXeQPBJX4aEyGI_nU3nfdqCKBiUg"></script>
 </meta>
+<style >
+#initial-screen
+{
+  background-color: #000000;
+  opacity:0.6;
+}
+#initial-screen p
+{
+  margin: 5%;
+  font-weight: bold;
+  color: #ffffff;
+}
+#status
+{
+ margin: 5%;
+  font-weight: bold;
+  color: #ffffff; 
+
+}
+</style>
 </head>
-<body>
+<body style="background: url(background.jpg)">
+
 <script>
   // This is called with the results from from FB.getLoginStatus().
   var accessToken;
@@ -22,6 +43,12 @@
   var state=new Array();
   var type=new Array();
   var loc=new Array();
+  var food_image=new Array();
+  var icon=new Array();
+  var details=new Array();
+  var urls=new Array();
+  var title=new Array();
+  var isundefined=new Array();
   //var myrest=new Object();
   function statusChangeCallback(response) {
     console.log('statusChangeCallback');
@@ -35,6 +62,7 @@
         accessToken = response.authResponse.accessToken;
         //alert(accessToken);
         
+        
        // console.log("entered");
         testAPI(function(){
           console.log(temp1);
@@ -47,6 +75,7 @@
               setTimeout(
               callserver(restaurants,function(){
                   //console.log("donw");
+                  document.getElementById('show-map').style.display='block';
                   setTimeout(
                     unwrap(),400);
               }),200)
@@ -113,11 +142,13 @@
       
     } else if (response.status === 'not_authorized') {
       // The person is logged into Facebook, but not your app.
+      document.getElementById('show-map').style.display='none';
       document.getElementById('status').innerHTML = 'Please log ' +
         'into this app.';
     } else {
       // The person is not logged into Facebook, so we're not sure if
       // they are logged into this app or not.
+      document.getElementById('show-map').style.display='none';
       document.getElementById('status').innerHTML = 'Please log ' +
         'into Facebook.';
     }
@@ -128,6 +159,7 @@
   // code below.
   function checkLoginState() {
     FB.getLoginStatus(function(response) {
+
         statusChangeCallback(response);
     });
   }
@@ -262,7 +294,7 @@
           //callback(temp1,testAPI_again);
           
           //callback();
-          dfd.done(setTimeout(function(){ alert("done"+temp1); callback(temp1); },150));
+          dfd.done(setTimeout(function(){ console.log("done"+temp1); callback(temp1); },150));
    
         }
 
@@ -330,7 +362,7 @@
     //console.log(id[2]);
     //return deferred.promise;
 
-    dfd1.done(setTimeout(function(){ alert("done with next"+restaurants); callback(restaurants); },300));
+    dfd1.done(setTimeout(function(){ console.log("done with next"+restaurants); callback(restaurants); },300));
 
   
   }
@@ -425,27 +457,48 @@
     {
       stuff[i]=new Object();
       stuff[i].name=items[i].name;
-      stuff[i].category=items[i].categories;
+      stuff[i].category=items[i].categories[0];
       stuff[i].phone=items[i].display_phone;
+      stuff[i].image = items[i].image_icon;
       //stuff[i].food_img=items[i].images_food[0];
-      stuff[i].isclosed=items[i].is_closed;
+      
+      if(items[i].is_closed == true)
+      {
+        stuff[i].isclosed='Closed';
+      }
+      else
+      {
+        stuff[i].isclosed='Open';
+      }
       stuff[i].lat=items[i].location.coordinate.latitude;
       stuff[i].longi=items[i].location.coordinate.longitude;
-      stuff[i].image_url1=items[i].information.yipit1._values.image_url;
-      stuff[i].image_url0=items[i].information.yipit0._values.image_url;
-      stuff[i].details0=items[i].information.yipit0._values.details;
-      stuff[i].details1=items[i].information.yipit1._values.details;
-      stuff[i].title0=items[i].information.yipit0._values.title;
-      stuff[i].title1=items[i].information.yipit1._values.title;
-      stuff[i].url0=items[i].information.yipit0._values.url;
-      stuff[i].url1=items[i].information.yipit1._values.url;
-      stuff[i].food_image=items[i].information.image_urls[0];
-      //myrest.address=items[i].location.display_address[0]+items[i].location.display_address[0]+items[i].location.display_address[0];
-    }
-
-    console.log(stuff);
+      stuff[i].food_image=items[i].image_urls[1];
+      stuff[i].icon=new Array();
+      stuff[i].title=new Array();
+      stuff[i].details=new Array();
+      stuff[i].urls=new Array();
+      var num=items[i].numberofdeals;
+      if(num==0)
+      {
+        console.log("came here when i= "+items[i].name);
+        stuff[i].isundefined=1;
+        continue;
+      }
+      for(var k=0;k<num;k++)
+      {
+            console.log("came here when i= "+items[i].name+" k= "+k);
+            stuff[i].icon.push(items[i].deals.yipit[k]._values.image_url);
+            //console.log("came here when i= "+items[i].name+" k= "+k);
+            //stuff[i].image_url[k]=items[i]['deals']['yipit'][k]['_values']['image_url']; 
+            stuff[i].title.push(items[i]['deals']['yipit'][k]['_values']['title']);
+            stuff[i].details.push(items[i]['deals']['yipit'][k]['_values']['details']);
+            stuff[i].urls.push(items[i]['deals']['yipit'][k]['_values']['url']);
+      }         
+    
  }
 
+console.log(stuff);
+}
   /* make the API call */
 
 </script>
@@ -458,26 +511,41 @@ $(document).ready(function(){
 
 function initialize() {
 
+  document.getElementById('initial-screen').style.display='none';
+  document.getElementById('show-map').style.display='none';
+  //document.getElementById('googleMap').style.display='block';
+  
+  //document.getElementById('gmaps').style.height='100%';
+  //document.getElementById('gmaps').style.width='100%';*/
   var mapProp = {
-    //center:new google.maps.LatLng(39.5, -98.35),
-    center:new google.maps.LatLng(34.052, -118.243),
-    zoom:3,
+    //center:new google.maps.LatLng(37.4220323, -122.0845109),    
+
+    center:new google.maps.LatLng(34, -118.2), 
+    //center:new google.maps.LatLng(34.052, -118.243),
+    //center:new google.maps.LatLng(41.850033, -87.6500523),
+    zoom:8,
     mapTypeId:google.maps.MapTypeId.ROADMAP
   };
   var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 
   setMarkers(map);
-  //autoCenter();
+  autoCenter();
+}
+
+function getdeals(){
+
+    alert("buzz");
 }
 
 function setMarkers(map) {
 
   var infowindow = new google.maps.InfoWindow({
-      maxWidth: 160
+      maxWidth: 185
+
     });
   //var infoWindow = new google.maps.InfoWindow();
   var markers=new Array();
-  
+  console.log("len= "+stuff.length);
   for (var i = 0; i < stuff.length; i++) {
     //var resto = stuff[i];
 
@@ -488,15 +556,24 @@ function setMarkers(map) {
       var marker = new google.maps.Marker({
       position: {lat: stuff[i].lat, lng: stuff[i].longi},
       map: map,
-      title: stuff[i].name
-      //zIndex: beach[3]
+      title: stuff[i].name,
+      zIndex: i
     });
 
       markers.push(marker);
 
       google.maps.event.addListener(marker, 'click', (function(marker, i) {
         return function() {
-          var contentString = '<div id="content">'+'<h1>'+stuff[i].name+'<p><b>'+stuff[i].phone+'</p></b>'+'</div>';
+          var avail=null;
+          if(stuff[i].isclosed === 'Closed')
+          {
+              avail="We are closed! :(";
+          }
+          else
+          {
+            avail="We are open! :D";
+          }
+          var contentString = '<div id="content"><img src="'+stuff[i].image+'"style="height:100px;width:150px"/><p><b>'+stuff[i].name+'</b></p><p>'+avail+'</p><p><b>Contact us :'+stuff[i].phone+'</p></b> <button id="takeme" onclick="getdeals();">VIEW AVAILABLE DEALS...</button></div>';
           console.log("here:"+contentString);
           console.log("i="+i);
           infowindow.setContent(contentString);
@@ -543,21 +620,28 @@ function initMap() {
   the JavaScript SDK to present a graphical Login button that triggers
   the FB.login() function when clicked.
 -->
+<div id="main">
+  <div id="initial-screen" style="text-align:center;border:1px solid;height:300px;margin-left:320px;margin-top:200px;margin-right:300px">
+    <p style="align:center;">Welcome to Dine With Deals!!!</p>
+    <fb:login-button scope="public_profile,email" autologoutlink="true" onlogin="checkLoginState();">
+    </fb:login-button>
 
-<fb:login-button scope="public_profile,email" autologoutlink="true" onlogin="checkLoginState();">
-</fb:login-button>
+      <div id="status">
 
-<div id="status">
+      </div>
+  </div>
+      <div id="maps">
+        <button id="show-map" style="display:none" onclick="initialize();">GET ME MY DEALS!!!</button>
+        <div id="googleMap" style="width:1280px;height:700px;"></div>
+    </div>
+  
+
 </div>
-
-<button id="show-map" onclick="initialize();">GET ME MY DEALS!!!</button>
-
-<div id="googleMap" style="width:500px;height:380px;"></div>
-
 <!-- <fb:login-button  autologoutlink="true"></fb:login-button> -->
 
 
 
 
 </body>
+
 </html>
