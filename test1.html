@@ -25,7 +25,33 @@
   color: #ffffff; 
 
 }
+#overlay {
+     visibility: hidden;
+     position: absolute;
+     left: 0px;
+     top: 0px;
+     width:100%;
+     height:100%;
+     text-align:center;
+     z-index: 1000;
+}
+#overlay div {
+     width:800px;
+     margin: 100px auto;
+     height:450px;
+     background-color: #fff;
+     border:1px solid #000;
+     padding:15px;
+     text-align:center;
+}
+
 </style>
+<script>
+function overlay() {
+  el = document.getElementById("overlay");
+  el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
+}
+</script>
 </head>
 <body style="background: url(background.jpg)">
 
@@ -33,6 +59,7 @@
   // This is called with the results from from FB.getLoginStatus().
   var accessToken;
   var id=new Array();
+  var promises=[];
   var temp1=new Array();
   var restaurants=new Array();
   var items=new Array();
@@ -78,8 +105,8 @@
                   document.getElementById('show-map').style.display='block';
                   setTimeout(
                     unwrap(),400);
-              }),200)
-          }),200);
+              }),400)
+          }),200)
         });
 
        /*testAPI(function() {
@@ -294,7 +321,7 @@
           //callback(temp1,testAPI_again);
           
           //callback();
-          dfd.done(setTimeout(function(){ console.log("done"+temp1); callback(temp1); },150));
+          dfd.done(setTimeout(function(){ console.log("done"+temp1); callback(temp1); },200));
    
         }
 
@@ -362,7 +389,7 @@
     //console.log(id[2]);
     //return deferred.promise;
 
-    dfd1.done(setTimeout(function(){ console.log("done with next"+restaurants); callback(restaurants); },300));
+    dfd1.done(setTimeout(function(){ console.log("done with next"+restaurants); callback(restaurants); },600));
 
   
   }
@@ -413,7 +440,7 @@
     //alert(id);
     //alert(restaurants);
     //console.log(JSON.stringify(restaurants));
-    var promises=[];
+    //var promises=[];
     //var objs=new Array();
     $.each(restaurants, function (i,part) {
 
@@ -529,13 +556,10 @@ function initialize() {
   var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 
   setMarkers(map);
-  autoCenter();
+  //autoCenter();
 }
 
-function getdeals(){
 
-    alert("buzz");
-}
 
 function setMarkers(map) {
 
@@ -573,7 +597,7 @@ function setMarkers(map) {
           {
             avail="We are open! :D";
           }
-          var contentString = '<div id="content"><img src="'+stuff[i].image+'"style="height:100px;width:150px"/><p><b>'+stuff[i].name+'</b></p><p>'+avail+'</p><p><b>Contact us :'+stuff[i].phone+'</p></b> <button id="takeme" onclick="getdeals();">VIEW AVAILABLE DEALS...</button></div>';
+          var contentString = '<div id="content"><img src="'+stuff[i].image+'"style="height:100px;width:150px"/><p><b>'+stuff[i].name+'</b></p><p>'+avail+'</p><p><b>Contact us :'+stuff[i].phone+'</p></b> <button id="takeme" onclick="getdeals('+i+');">VIEW AVAILABLE DEALS...</button></div>';
           console.log("here:"+contentString);
           console.log("i="+i);
           infowindow.setContent(contentString);
@@ -582,6 +606,14 @@ function setMarkers(map) {
       })(marker, i));
     
   }
+
+}
+
+function getdeals(p){
+  alert(p);
+  var mod='<div><p></p><a href="#" onclick="overlay()">close</a></div>';
+  $('#overlay').html(mod);
+  overlay();
 
 }
 
@@ -631,10 +663,11 @@ function initMap() {
       </div>
   </div>
       <div id="maps">
-        <button id="show-map" style="display:none" onclick="initialize();">GET ME MY DEALS!!!</button>
+        <button id="show-map" style="display:none;" onclick="initialize();">GET ME MY DEALS!!!</button>
         <div id="googleMap" style="width:1280px;height:700px;"></div>
     </div>
-  
+  <div id="overlay">
+  </div>
 
 </div>
 <!-- <fb:login-button  autologoutlink="true"></fb:login-button> -->
