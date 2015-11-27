@@ -146,8 +146,35 @@ $obj->{'images_food'}=$temp_store;*/
 
 $output=json_decode($o);
 //echo $output->{'yipit'};
+$json_array = array();
 $obj->{'information'}=$output;
-echo json_encode($obj);
+$json_array['is_claimed'] = $obj->{'is_claimed'};
+$json_array['rating'] = $obj->{'rating'};
+$json_array['rating_img_url']=$obj->{'rating_img_url'};
+$json_array['name'] =  $obj->{'name'};
+$json_array['url'] = $obj->{'url'};
+$json_array['rating_img_url_small'] = $obj->{'rating_img_url_small'};
+for($k=0;$k<count($obj->{'categories'});$k++)
+{
+$json_array['categories'][$k]=$obj->{'categories'}[$k];
+}
+$json_array['display_phone']=$obj->{'display_phone'};
+$json_array['id']=$obj->{'id'};
+$json_array['is_closed']=$obj->{'is_closed'};
+$json_array['display_phone']=$obj->{'display_phone'};
+$json_array['location']['city']=$obj->{'location'}->{'city'};
+$json_array['location']['display_address']=$obj->{'location'}->{'display_address'};
+$json_array['location']['coordinate']['latitude']=$obj->{'location'}->{'coordinate'}->{'latitude'};
+$json_array['location']['coordinate']['longitude']=$obj->{'location'}->{'coordinate'}->{'longitude'};
+$json_array['numberofdeals']=$obj->{'information'}->{'numberofdeals'};
+$json_array['image_icon']=$obj->{'image_url'};
+for($k=0;$k<(int)$obj->{'information'}->{'numberofdeals'};$k++)
+{
+	$json_array['deals']['yipit'][$k]=$obj->{'information'}->{'deals'}->{'yipit'.$k};
+}
+$json_array['image_urls']=$obj->{'information'}->{'image_urls'}[0];
+//echo count($json_array['image_urls']);
+echo json_encode($json_array);
 
 }
 /**
@@ -181,7 +208,7 @@ if (isset($_GET['loc']))
 //$location = 'Los Angeles,CA';
 $term=$restaurant;
 $location = $loc;
-//$term="Manas India Restaurant";
+//$term="Yard House";
 //$location="Los Angeles,CA";
 query_api($term, $location);
 ?>
