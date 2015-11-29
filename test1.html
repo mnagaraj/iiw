@@ -6,17 +6,38 @@
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script> 
 <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDLFVJsXeQPBJX4aEyGI_nU3nfdqCKBiUg"></script>
 </meta>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
 <style >
+body { 
+        background: url('bg.jpg') no-repeat center center fixed; 
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+}
+.gi-5x{font-size: 5em;}
+.icon-flipped {
+transform: scaleX(-1);
+-moz-transform: scaleX(-1);
+-webkit-transform: scaleX(-1);
+-ms-transform: scaleX(-1);
+}
 #initial-screen
 {
-  background-color: #000000;
-  opacity:0.6;
+  background-color: rgba(256,256,256,0.6);
+  
 }
 #initial-screen p
 {
   margin: 5%;
   font-weight: bold;
-  color: #ffffff;
+  color: #4F3D3D;
+  font-size:40px;
+  font-family: "Comic Sans MS",sans-serif;
 }
 #status
 {
@@ -35,7 +56,7 @@
      text-align:center;
      z-index: 1000;
 }
-#overlay div {
+#overlay,#outer {
      width:800px;
      margin: 100px auto;
      height:450px;
@@ -46,14 +67,9 @@
 }
 
 </style>
-<script>
-function overlay() {
-  el = document.getElementById("overlay");
-  el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
-}
-</script>
+
 </head>
-<body style="background: url(background.jpg)">
+<body>
 
 <script>
   // This is called with the results from from FB.getLoginStatus().
@@ -103,10 +119,11 @@ function overlay() {
               callserver(restaurants,function(){
                   //console.log("donw");
                   document.getElementById('show-map').style.display='block';
+                  document.getElementById('loader').style.display='none';
                   setTimeout(
-                    unwrap(),400);
-              }),400)
-          }),200)
+                    unwrap(),1000);
+              }),1000)
+          }),1000)
         });
 
        /*testAPI(function() {
@@ -254,6 +271,7 @@ function overlay() {
       //alert(response);
       dfd.resolve();
       console.log('Successful login for: ' + response.name);
+      document.getElementById("loader").style.display="block";
       document.getElementById('status').innerHTML =
         'Thanks for logging in, ' + response.name + '!';
 
@@ -321,7 +339,7 @@ function overlay() {
           //callback(temp1,testAPI_again);
           
           //callback();
-          dfd.done(setTimeout(function(){ console.log("done"+temp1); callback(temp1); },200));
+          dfd.done(setTimeout(function(){ console.log("done"+temp1); callback(temp1); },1000));
    
         }
 
@@ -352,9 +370,9 @@ function overlay() {
         dfd1.resolve();
         //str1=response.data[0].id;    
         var str1=response.data[0].category;
-        var str2=response.data[0].category_list[0].name;
+          var str2=response.data[0].category_list[0].name;
         //console.log(j,str1);  
-         if(str1.indexOf("Food") >-1 || str1.indexOf("beverages") >-1 || str1.indexOf("grocery") >-1 || str1.indexOf("Restaurant") >-1 || str1.indexOf("Cafe") >-1 || str1.indexOf("Hotel") >-1 || str2.indexOf("Restaurant") > -1 || str2.indexOf("Bar") > -1 || str2.indexOf("Grill") >-1 )
+         if(str1.indexOf("Food") >-1 || str1.indexOf("beverages") >-1 || str1.indexOf("grocery") >-1 || str1.indexOf("Restaurant") >-1 || str1.indexOf("Cafe") >-1 || str1.indexOf("Hotel") >-1 || str2.indexOf("Restaurant") > -1 || str2.indexOf("Bar") > -1 || str2.indexOf("Grill") >-1 || str1.indexOf("Local business") >-1)
         {
           category[j]=response.data[0].category;
           city[j]=response.data[0].location.city;
@@ -472,7 +490,7 @@ function overlay() {
     //return deferred.promise;
     $.when.apply(null, promises).done(function(){
 
-       alert('All done');
+       //alert('All done');
        callback();
   })
  }
@@ -499,11 +517,12 @@ function overlay() {
       }
       stuff[i].lat=items[i].location.coordinate.latitude;
       stuff[i].longi=items[i].location.coordinate.longitude;
-      stuff[i].food_image=items[i].image_urls[1];
+      stuff[i].food_image=items[i].image_urls;
       stuff[i].icon=new Array();
       stuff[i].title=new Array();
       stuff[i].details=new Array();
       stuff[i].urls=new Array();
+      stuff[i].numberofdeals=items[i].numberofdeals;
       var num=items[i].numberofdeals;
       if(num==0)
       {
@@ -532,6 +551,27 @@ console.log(stuff);
 
 <script>
 
+//$(document).ready(function() {
+  function otherdeals(p){
+  //$("#submit").click(function() {
+  
+  //var name="YES"
+  //var obj=new Object();
+  //var name="pizza";
+  //var p=$("#submit").name;
+  console.log("buzz"+p);
+  var name=stuff[p].category;
+  var city1=city[p];
+  console.log("name: "+name+"city: "+city1);
+  //localStorage.setItem('names',JSON.stringify(b));
+  //window.location.href="http://localhost/b.html?name="+encodeURIComponent(name);
+  window.location.href="http://localhost/b.html?name="+name+"&city="+city1;
+
+  //window.location.href="http://localhost/b.html?;
+  //});
+  }
+//});
+
 $(document).ready(function(){
     $('#show-map').on('click',initialize);
 });
@@ -550,13 +590,13 @@ function initialize() {
     center:new google.maps.LatLng(34, -118.2), 
     //center:new google.maps.LatLng(34.052, -118.243),
     //center:new google.maps.LatLng(41.850033, -87.6500523),
-    zoom:8,
+    zoom:10,
     mapTypeId:google.maps.MapTypeId.ROADMAP
   };
   var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 
   setMarkers(map);
-  //autoCenter();
+  autoCenter();
 }
 
 
@@ -581,7 +621,7 @@ function setMarkers(map) {
       position: {lat: stuff[i].lat, lng: stuff[i].longi},
       map: map,
       title: stuff[i].name,
-      zIndex: i
+      zIndex: (i+1)
     });
 
       markers.push(marker);
@@ -597,7 +637,7 @@ function setMarkers(map) {
           {
             avail="We are open! :D";
           }
-          var contentString = '<div id="content"><img src="'+stuff[i].image+'"style="height:100px;width:150px"/><p><b>'+stuff[i].name+'</b></p><p>'+avail+'</p><p><b>Contact us :'+stuff[i].phone+'</p></b> <button id="takeme" onclick="getdeals('+i+');">VIEW AVAILABLE DEALS...</button></div>';
+          var contentString = '<div id="content"><img src="'+stuff[i].image+'"style="height:100px;width:150px"/><p><b>'+stuff[i].name+'</b></p><p>'+avail+'</p><p><b><i class="fa fa-phone"></i> '+stuff[i].phone+'</p></b><button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#myModal" onclick="getdeals('+i+')">View Deals <i class="fa fa-tags"></i></button></div>';
           console.log("here:"+contentString);
           console.log("i="+i);
           infowindow.setContent(contentString);
@@ -610,14 +650,61 @@ function setMarkers(map) {
 }
 
 function getdeals(p){
-  alert(p);
-  var mod='<div><p></p><a href="#" onclick="overlay()">close</a></div>';
-  $('#overlay').html(mod);
-  overlay();
+
+  var x=stuff[p].numberofdeals;
+
+  
+  if(x == 0)
+  {
+    var mod='<div class="modal fade" id="myModal" role="dialog"><div class="modal-dialog">';
+        mod+='<div class="modal-content">';
+        mod+='<div class="modal-header">';
+        mod+='<button type="button" class="close" data-dismiss="modal">&times;</button>';
+        mod+='<h4 class="modal-title">Deals for '+stuff[p].name+'</h4></div>';
+        mod+='<div class="modal-body">';
+        mod+='<p>Ooops!! We are out of deals for this restaurant :(.</p><p>Check out our deals for restaurants with similar cuisine!</p><button class="btn btn-success btn-sm" id="#submit" onclick="otherdeals('+p+');">Cuisine deals!</button>';
+        mod+='</div>';
+        mod+='<div class="modal-footer">';
+        mod+='<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>';
+        mod+='</div>'
+        mod+='</div></div>';
+    $('.container').html(mod);
+        //overlay();
+  }
+
+  else
+  {   
+      var mod='<div class="modal fade" id="myModal" role="dialog"><div class="modal-dialog">';
+          mod+='<div class="modal-content">';
+          mod+='<div class="modal-header">';
+          mod+='<button type="button" class="close" data-dismiss="modal">&times;</button>';
+          mod+='<h4 class="modal-title">Deals for '+stuff[p].name+'</h4></div>';
+      for(var k=0;k<x;k++)
+      { var n=stuff[p].food_image.length;
+        var y = Math.floor((Math.random() * n) + 1);
+        mod+='<div class="modal-body">';
+        mod+='<div class="row"><div class="col-sm-6"><img src="'+stuff[p].food_image[y]+'"/></div><div class="col-sm-6"><p style="font-size:25px;">';
+        mod+=stuff[p].title[k];
+        mod+='</p><p>'+stuff[p].details[k];
+        mod+='</p><a class="btn btn-success btn-sm" href="'+stuff[p].urls[k]+'" target="_blank">Go to deal!</a></div></div>';
+        
+        mod+='</div>';
+        
+       
+      }
+        mod+='<div class="modal-footer">';
+        mod+='<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>';
+        mod+='</div>'
+        mod+='</div></div>';
+       $('.container').html(mod);
+        //overlay();
+  }
+  
+  
 
 }
 
-/*function autoCenter() {
+function autoCenter() {
       //  Create a new viewpoint bound
       var bounds = new google.maps.LatLngBounds();
       //  Go through each...
@@ -627,7 +714,7 @@ function getdeals(p){
       //  Fit these bounds to the map
       map.fitBounds(bounds);
     }
-*/
+
 
 </script>
 
@@ -652,21 +739,29 @@ function initMap() {
   the JavaScript SDK to present a graphical Login button that triggers
   the FB.login() function when clicked.
 -->
-<div id="main">
+<div id="main" style="text-align:center;">
   <div id="initial-screen" style="text-align:center;border:1px solid;height:300px;margin-left:320px;margin-top:200px;margin-right:300px">
-    <p style="align:center;">Welcome to Dine With Deals!!!</p>
+    <div class="row">
+      <div class="col-sm-3" style="text-align:right;padding-top:10px;padding-right:0px;">
+    <i class="fa fa-cutlery fa-5x"></i>
+</div><div class="col-sm-9" style="text-align:left;"><p style="align:center;">Dine With Deals</p></div></div>
     <fb:login-button scope="public_profile,email" autologoutlink="true" onlogin="checkLoginState();">
     </fb:login-button>
-
-      <div id="status">
+    <br/><br/>
+      <i class="fa fa-spinner fa-pulse fa-4x" id="loader" style="display:none"></i>
+      <div style="text-align:center;">
+      <button id="show-map" class="btn btn-primary btn-md" style="display:none;margin: 0 auto;font-weight:bold;" onclick="initialize();">Visited Restaurants..</button>
+      </div>
+      <div id="status" style="color:#4F3D3D">
 
       </div>
   </div>
       <div id="maps">
-        <button id="show-map" style="display:none;" onclick="initialize();">GET ME MY DEALS!!!</button>
+        
+        
         <div id="googleMap" style="width:1280px;height:700px;"></div>
     </div>
-  <div id="overlay">
+  <div class="container">
   </div>
 
 </div>
