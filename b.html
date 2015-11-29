@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script> 
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'  type='text/css'>
+<style>
+.top-buffer { margin-top:20px; }
+.good-bg { background-color: #E3F6CE; padding-left: 0px;  padding-right: 0px; height:400px;}
+.navbar-nav{width:100%;
+                text-align: center;
+                padding-top: 30px;
+                font-size:25px;
+                font-weight:600;
+                    color:#222924;
+                }
+</style>
+<script type="text/javascript">
+
+
+$(document).ready(function(){
+
+var idx=document.URL.indexOf("?name=");
+//alert(idx);
+if(idx!==-1)
+{
+ var main=document.URL.split("?")[1];
+ //alert(main);
+ str1=main.split("&")[0];
+ str1=str1.split("=")[1];
+ str1=str1.split(",")[0];
+ str1=str1.toLowerCase();
+//alert(str1);
+ if(str1.indexOf('american') !=-1 )
+ {
+    str1='american-food';
+ }
+
+ else if(str1.indexOf('bar')!=-1)
+ {
+    if(str1.indexOf('sushi')!=-1)
+    {
+    str1='sushi';
+    }
+    else
+    {
+        str1='bar-food';
+    }
+ }
+else if(str1.indexOf('desserts')!=-1)
+ {
+    str1='american-food';
+ }
+ else if(str1.indexOf('mongolian')!=-1)
+ {
+    str1='indian-restaurants';
+ }
+else
+{
+        str1+='-restaurants';
+}
+ 
+ var str2=main.split("&")[1];
+
+ str2=str2.split("=")[1];
+ str2=decodeURI(str2);
+ str2=str2.toLowerCase();
+ str2='los-angeles';
+ if(str1.indexOf('sushi')!=-1)
+    {
+    str2='los-angeles';
+    }
+
+// alert(str1+" "+str2);
+ 
+ $.ajax({
+        url: 'http://localhost/myspider/myspider/iiw/cuisine.php',
+        type: 'GET',
+	data: {name:str1,city:str2},
+        dataType: "json",
+        success: function(data)
+		{
+		item=jQuery.parseJSON(JSON.stringify(data));
+		//console.log("Success "+item);
+        expand(item);
+	},
+    error: function(xhr,status,error){alert(status);}
+    });
+}
+})
+
+function expand(item)
+{
+var num= parseInt(item.number)-1;
+console.log(item['deal13']);
+console.log(num);
+var title=new Array();
+var merchant=new Array();
+var image_url=new Array();
+var url=new Array();
+var details=new Array();
+var location=new Array();
+var distance=new Array();
+var original_price=new Array();
+var discount=new Array();
+var mod='<div class="container">';
+
+if(num>0)
+{
+    
+    for(var i=0;i<num;i++)
+    {
+        title[i]=item['deal'+i]['_values']['title'];
+        merchant[i]=item['deal'+i]['_values']['merchant'];
+        image_url[i]=item['deal'+i]['_values']['image_url'];
+        url[i]=item['deal'+i]['_values']['url'];
+        details[i]=item['deal'+i]['_values']['details'];
+        location[i]=item['deal'+i]['_values']['location'];
+        distance[i]=item['deal'+i]['_values']['distance'];
+        original_price[i]=item['deal'+i]['_values']['original_price'];
+        discount[i]=item['deal'+i]['_values']['discount'];
+        
+    }
+    for(var i=0;i<num;i=i+3)
+    {
+        mod+='<div class="row top-buffer">';
+        mod+='<div class="col-xs-3 good-bg"><img class="img-responsive" src="'+image_url[i]+'"/><div style="padding-top:5px;padding-left:10px;"><p style="font-size:20px;font-weight:700;font-family:Comic Sans MS, cursive, sans-serif;">'+merchant[i]+'</p><p style="font-weight:bold;">'+title[i]+'</p><p>Price: <s class="text-danger"> '+original_price[i]+' </s> <strong> '+discount[i]+'</strong></p><p class="glyphicon glyphicon-map-marker">'+location[i]+' '+distance[i]+'</p>';
+        mod+='<p><a class="btn btn-primary btn-sm" href="'+url[i]+'" target="_blank">View Deal</a></p></div></div>';
+        mod+='<div class="col-xs-1"></div>';
+        if((i+1)<=num-1)
+        {
+        mod+='<div class="col-xs-3 good-bg"><img class="img-responsive" src="'+image_url[i+1]+'"/><div style="padding-top:5px;padding-left:10px;"><p style="font-size:20px;font-weight:700;font-family:Comic Sans MS, cursive, sans-serif;">'+merchant[i+1]+'</p><p style="font-weight:bold;">'+title[i+1]+'</p><p>Price: <s class="text-danger"> '+original_price[i+1]+' </s> <strong> '+discount[i+1]+'</strong></p><p class="glyphicon glyphicon-map-marker">'+location[i+1]+' '+distance[i+1]+'</p>';
+         mod+='<p><a class="btn btn-primary btn-sm" href="'+url[i+1]+'" target="_blank">View Deal</a></p></div></div>';
+        mod+='<div class="col-xs-1"></div>';}
+        if((i+2)<=num-1)
+        {
+
+        mod+='<div class="col-xs-3 good-bg"><img class="img-responsive" src="'+image_url[i+2]+'"/><div style="padding-top:5px;padding-left:10px;"><p style="font-size:20px;font-weight:700;font-family:Comic Sans MS, cursive, sans-serif;">'+merchant[i+2]+'</p><p style="font-weight:bold;">'+title[i+2]+'</p><p>Price: <s class="text-danger"> '+original_price[i+2]+' </s> <strong> '+discount[i+2]+'</strong></p><p class="glyphicon glyphicon-map-marker">'+location[i+2]+' '+distance[i+2]+'</p>';
+         mod+='<p><a class="btn btn-primary btn-sm" href="'+url[i+2]+'" target="_blank">View Deal</a></p></div></div>';}
+        mod+='</div>';
+
+
+    }
+
+}
+mod+='</div>';
+$('.content_holder').html(mod);
+console.log(title);
+
+}
+</script>
+
+</head>
+<body style="background: url('bgg.jpg') no-repeat center center fixed;" >
+    <nav class="navbar navbar-default" style="background-color:#8C918E;height:100px;">
+  <div class="container-fluid">
+    <div class="navbar-collapse collapse">
+     <p class="nav navbar-nav"><img src="images.png" style="height:60px;width:80px;"/>&nbsp;CUISINE DEALS</p>
+    </div>
+  </div>
+</nav>
+
+<div class="content_holder">
+</div>
+</body>
+</html>
+
+
+</html>
