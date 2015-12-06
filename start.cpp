@@ -20,6 +20,26 @@
 using namespace std;
 using namespace cv;
 
+// WAVE PCM soundfile format (you can find more in https://ccrma.stanford.edu/courses/422/projects/WaveFormat/ )
+typedef struct header_file
+{
+    char chunk_id[4];
+    int chunk_size;
+    char format[4];
+    char subchunk1_id[4];
+    int subchunk1_size;
+    short int audio_format;
+    short int num_channels;
+    int sample_rate;			// sample_rate denotes the sampling rate.
+    int byte_rate;
+    short int block_align;
+    short int bits_per_sample;
+    char subchunk2_id[4];
+    int subchunk2_size; // subchunk2_size denotes the number of samples.
+    //char data; // actual data : Added by tarmizi
+} header;
+
+typedef struct header_file* header_p;
 
 class get_descriptors
 {
@@ -38,28 +58,29 @@ class get_descriptors
 				int BHistogram[256] ;
 				int frameCount = 0 ;							// Counts the number of frames in the video
 
-				int frame(int,char*);
+				int frame(int,char*,char*);
 				void AnalyzeMotion(int,unsigned char*,char *);
 				int AnalyzeColor(int, unsigned char*, char*) ;
-				int dominantColor(int, unsigned char*, char*) ;
+				int AnalyzeAudio(char*) ;
 				void InitializeHistArray(unsigned int *);
 				void ComputeGrayscaleHistogram(unsigned int *, unsigned char *,  char*,char );
 				unsigned long RetrieveHistKeyValues(unsigned int* );
 				void SaveToFile(unsigned int* ,int, char* );
 };
 
-int get_descriptors::frame(int count,char* file)
+int get_descriptors::frame(int count,char* file,char* audiofile)
 
 {
 
-	if(count != 2)
+	if(count != 3)
 	{
 		printf("Error - Incorrect Parameter Usage:") ;
-		printf("ProgramName Inputvideo") ;
+		printf("ProgramName Inputvideo InputAudio") ;
 		return 1 ;
 	}
 
 	cout << file <<endl;
+	cout <<audiofile<<endl;
 	vidFile = fopen(file,"rb");
 	if (vidFile == NULL)
 	{
@@ -68,8 +89,11 @@ int get_descriptors::frame(int count,char* file)
 	}
 
 	char * filename;
+	char * audio;
 	filename = strtok (file,".") ;
+	//audio = strtok (audiofile,".") ;
 	cout<<"filename= "<<filename<<endl;
+	//cout<<"audiofilename= "<<audio<<endl;
 	fseek (vidFile , 0 , SEEK_END);
 	long vidSize = ftell (vidFile);
 	rewind (vidFile);
@@ -93,13 +117,13 @@ int get_descriptors::frame(int count,char* file)
 	frameCount = vidMemSize / FRAME_MEM_SIZE ;
 	//char*tempo=filename;
 	string x=(string)filename;
-	//AnalyzeColor(frameCount,vidDataBlock,file);
-	//AnalyzeMotion(frameCount,vidDataBlock,filename);
+
+	AnalyzeMotion(frameCount,vidDataBlock,filename);
 	char*temp;
 	temp = new char[x.size() + 1];
 	memcpy(temp, x.c_str(), x.size() + 1);
-	//dominantColor(frameCount,vidDataBlock,filename);
 	AnalyzeColor(frameCount,vidDataBlock,file);
+	AnalyzeAudio(audiofile);
 	printf("\n\n\n::: Video Processing metrics :::\n\n");
 	printf("%s%s%s", "Video filename: ", filename, "\n");
 	printf("%s%f%s", "Video duration: ", (double)frameCount / 30.0, "\n");
@@ -110,13 +134,158 @@ int get_descriptors::frame(int count,char* file)
 	return 0;
 }
 
+int get_descriptors::AnalyzeAudio(char* name)
+{
 
+		ofstream myFile1,myFiletemp;
+
+			myFiletemp.open("mizi.txt",ios::out);
+			cout<<name<<endl;
+
+		FILE * infile = fopen("/home/madhuri/Downloads/audio_wav/animation1.wav","rb");		// Open wave file in read mode
+		double bucket[128];
+		int BUFSIZE = 256;					// BUFSIZE can be changed according to the frame size required (eg:512)
+		int count = 0;						// For counting number of frames in wave file.
+		short int buff16[BUFSIZE];				// short int used for 16 bit as input data format is 16 bit PCM audio
+		header_p meta = (header_p)malloc(sizeof(header));	// header_p points to a header struct that contains the wave file metadata fields
+		int nb;							// variable storing number of bytes returned
+
+		if (infile)
+		{
+			fread(meta, 1, sizeof(header), infile);
+			//fwrite(meta,1, sizeof(*meta), outfile);
+
+
+			cout << "first chunk is :" << sizeof(meta->chunk_id) << " bytes in size" << endl;
+			cout << "The file is a :" << meta->chunk_id << " format" << endl;
+			cout << " Size of Header file is "<<sizeof(*meta)<<" bytes" << endl;
+			cout << " Sampling rate of the input wave file is "<< meta->sample_rate <<" Hz" << endl;
+			cout << " Number of bits per sample is: "<< meta->bits_per_sample <<"bits" << endl;
+			cout << " Size of data in the audio is: " << sizeof(meta->subchunk2_size)<< " bytes" << endl;
+			cout << " The number of channels of the file is "<< meta->num_channels << " channels" << endl;
+			cout << " The audio format is PCM:"<< meta->audio_format << endl;
+	        //cout << " The size of actual data is "<< sizeof(meta->data) << "bytes" << endl;
+
+
+
+			while ((nb = fread(buff16,sizeof(short int),BUFSIZE,infile))>0)          //(nb = fread(buff16,1,BUFSIZE,infile))>0
+			{
+
+				count++;
+	                            // Incrementing > of frame
+	            for (int i = 0; i<BUFSIZE; i++) //  BUFSIZE = 256, meta->num_channels = 1
+	                {
+
+	                       int c = (buff16[i]<<8) | buff16[1+i];
+	                        double t = c/32768.0;
+
+	                        myFiletemp << t << endl;
+
+	                }
+			}
+
+
+		cout << " Number of frames in the input wave file are " <<count << endl;
+
+		std::ifstream infile("mizi.txt");
+		double a;
+		double sum=0;
+		int c=0;
+
+		for(int i=0;i<331264;i=i+2588)
+		{	sum=0;
+			for(int j=0;j<2588;j++)
+			{
+				infile >> a;
+
+				sum+=a;
+			}
+
+			//cout<<fixed;
+			bucket[c]=sum;
+			c++;
+		}
+		char* temp;
+		char* temp1;
+		temp=name;
+		temp = strtok (temp,".") ;
+		temp=strtok(temp,"/");
+
+		while (temp) {
+			    //printf ("Token: %s\n", temp);
+			    temp1=temp;
+			    temp = strtok(NULL, "/");
+			}
+			cout<<"temo:"<<temp1<<endl;
+			strcat(temp1, "_audio.txt") ;
+			cout << temp1<<endl;
+			char* x;
+			x="/home/madhuri/db/";
+			//cout<<x<<temp1;
+			size_t len1 = strlen(x);
+			size_t len2 = strlen(temp1);
+
+			char *totalLine = (char*)malloc(len1 + len2 + 1);
+			if (!totalLine) abort();
+
+			memcpy(totalLine,x, len1);
+			memcpy(totalLine + len1, temp1, len2);
+			totalLine[len1 + len2] = '\0';
+
+			cout<<"path= "<<totalLine;
+			myFile1.open("/home/madhuri/db/animation1_audio.txt",ios::out);
+		std::cout << "The largest element is "  << *std::max_element(bucket,bucket+128) << '\n';
+		double max=*std::max_element(bucket,bucket+128);
+		for(int i=0;i<128;i++)
+		{
+			bucket[i]=bucket[i]/max;
+			cout<<bucket[i]<<endl;
+			myFile1 << bucket[i] << endl;
+		}
+	}
+
+		double tray[128];
+
+			for(int i=0;i<150;i++)
+			{
+				tray[i]= bucket[i];
+				//cout<<MotionIndexArray[i]<<endl;
+				cout<<tray[i]<<endl;
+			}
+
+		Mat A(150, 640, CV_8U,0.0f);
+			A.create(150, 640, CV_8U);
+			int b=0;
+
+			for(int k=0;k<640;k+=5)
+			{
+				cout<<"k="<<k<<endl;
+				for(int i=0;i<150;i++)
+				{
+					for(int j=k;j<5+k;j++)
+					{
+						//cout<<"b="<<j<<endl;
+						//cout<<tray[b]*255<<endl;
+						A.at<uchar>(i,j)= tray[b]*255;
+					}
+				}
+				cout<<"b="<<b<<endl;
+				b++;
+
+			}
+
+			imshow("Audio Descriptor",A);
+			waitKey(0);
+
+
+	return 0;
+}
 
 void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock, char* vidFileName)
 {
 	unsigned int difFrameAccum = 0 ;
 	unsigned int iFrameMotionIndex = 0 ;
-
+	ofstream myfile2;
 	unsigned int* MotionIndexArray = new unsigned int[frameCount-1] ;
 	float* NMotionIndexArray = new float[frameCount - 1];
 	unsigned int img[150][150],cimg[150][150];
@@ -129,11 +298,6 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 
 	int difByteValue = 0 ;
 
-	// Build output filename
-	//char* filename = new char[100] ;
-
-	//memcpy(filename, (strtok(vidFileName,".")), 30) ;
-	//strcat(filename, "query_motion.txt") ;
 	char* temp;
 	char* temp1;
 	temp=vidFileName;
@@ -193,15 +357,20 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 	}
 	    cout << "The biggest number is: " << t << endl;
 
+	    myfile2.open("/home/madhuri/db/animation1_motion.txt",ios::out);
+
 	for(int i=0;i<150;i++)
 	{
 		tray[i]=(double)MotionIndexArray[i]/(double)t;
 		//cout<<MotionIndexArray[i]<<endl;
 		cout<<tray[i]<<endl;
-	}
+		myfile2<<tray[i]<<endl;
 
-	Mat A(150, 750, CV_8UC1,0.0f);
-	A.create(150, 750, CV_8UC1);
+	}
+	myfile2.close();
+
+	Mat A(150, 750, CV_8U,0.0f);
+	A.create(150, 750, CV_8U);
 	int b=0;
 
 	for(int k=0;k<750;k+=5)
@@ -213,7 +382,7 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 			{
 				//cout<<"b="<<j<<endl;
 				//cout<<tray[b]*255<<endl;
-				A.at<float>(i,j)=tray[b]*255;
+				A.at<uchar>(i,j)= tray[b]*255;
 			}
 		}
 		cout<<"b="<<b<<endl;
@@ -221,155 +390,25 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 
 	}
 
-	imshow("buzz",A);
+	imshow("Motion Descriptor",A);
 	waitKey(0);
-
-	/*int cnt1=0;
-	int cnt2=0;
-	int cnt3=0;
-	int cnt12=0;
-
-
-
-	for(int l = 0 ;l < 150 ;l++)
-	{
-		for(int k = 0;k < 150;k++)
-		{
-			img[l][k]=0;
-
-			if(MotionIndexArray[l] ==0)
-			{
-				cnt1++;
-				img[l][k]=255;
-			}
-
-			else if(MotionIndexArray[l] > 0 && MotionIndexArray[l]<25)
-			{
-							cnt12++;
-							img[l][k]=123;
-
-			}
-			else if(MotionIndexArray[l] >=25 && MotionIndexArray[l] <=50)
-			{
-				cnt2++;
-				img[l][k]=255;
-			}
-			else
-			{
-				cnt3++;
-				img[l][k]=0;
-			}
-			//img[l][k]=MotionIndexArray[l];
-			//cout<<img[l][k];
-
-		}
-	}
-
-	cout <<cnt1<<" "<<cnt2<<" "<<cnt3<<" "<<cnt12<<endl;*/
-	/*float min = *min_element(MotionIndexArray, MotionIndexArray + frameCount-1);
-	float max = *max_element(MotionIndexArray, MotionIndexArray + frameCount-1);
-
-	for (int i = 0; i < (frameCount - 1); i++)
-	{
-
-		NMotionIndexArray[i] = ((float)(MotionIndexArray[i] - min)) / ((max - min));
-	}*/
-
-	//cv::imwrite("/home/madhuri/imgOut.bmp",  cv::Mat(150, CV_32FC1, MotionIndexArray));
-
-	Mat s;
-	//s= Mat(150,150,CV_8UC1,Scalar(0));
-	//imshow("buzz",s);
-	/*unsigned int imgs[8][8];
-
-
-	for(int i=0;i<8;i++)
-		{
-			for(int j=0;j<8;j++)
-			{
-				imgs[i][j]=(i+j);
-				//cout <<imgs[i][j] <<'\t';
-			}
-			//cout<<endl;
-
-		}
-
-	imgs[7][7]=255;
-	Mat im3(8, 8, CV_8UC1);
-	int k=0;
-*/
-	/*for(int i=0;i<8;i++)
-		{
-			for(int j=0;j<8;j++)
-			{
-				//if(j!=0){k=8*j;}
-				s= Mat(1,8,CV_8UC1,Scalar(imgs[i][j]));
-				im3.adjustROI(0, 0, 0,-7);
-				s.copyTo(im3);
-				//namedWindow("t",CV_WINDOW_AUTOSIZE);
-				cout << s<<endl<<endl;
-
-			}
-
-		}*/
-	//imshow("t",im3);
-	//const cv::Mat s(cv::Size(150, 150), CV_16UC1, (unsigned char*)MotionIndexArray);
-
-
-	/*int len=150;
-	Mat m[150];
-	for(int i=0;i<150;i++)
-	{
-		for(int j=0;j<150;j++)
-		{
-			m[i]= Mat(1,1,CV_8UC1,img[i][j]);
-		}
-
-
-	}
-
-	for(int i=0;i<150;i++)
-	{
-		imshow("help",m[i]);
-	}*/
-	//cout<<"kkk"<<endl;
-	  //cout<<"here1"<<endl;
-	  //SaveToFile(MotionIndexArray, frameCount-1, totalLine);
-	  //cout<<"here1"<<endl;
-	//SaveToFileN(NMotionIndexArray, frameCount, filename) ;
-
 }
 
 void get_descriptors::SaveToFile(unsigned int *FilePtr, int frameCount,  char* HistFileName)
 {
-	FILE *HistFile;
 	cout<<HistFileName<<endl;
 	ofstream myfile;
 	myfile.open(HistFileName,ios::out | ios::app);
 
-
-	//if (myfile.is_open()) { /* ok, proceed with output */ }
-	//HistFile = fopen(HistFileName,"w+");
-	cout<<"cnt="<<frameCount<<endl;
-	 if (myfile.is_open())
+	if (myfile.is_open())
 	{
-	for(int i = 0; i < frameCount; i++)
-	{
-		//fprintf(HistFile,"%d\r\n",FilePtr[i]);
-
-		myfile<<*(FilePtr+i)<<endl;
-		// added code to write to console
-
-		cout<<"Frame "<<i<<":"<<*(FilePtr+i)<<endl;
-		//printf("%s%d%s", "Frame ", i, ": ", FilePtr[i], "\n");
-
-		// added code to write to XML
-
+		for(int i = 0; i < frameCount; i++)
+		{
+			myfile<<*(FilePtr+i)<<endl;
+			cout<<"Frame "<<i<<":"<<*(FilePtr+i)<<endl;
+		}
 	}
-	//fclose(HistFile);
 	myfile.close();
-	}
-	cout<<"here";
 }
 
 void get_descriptors::ComputeGrayscaleHistogram(unsigned int *HistPtr, unsigned char *vidDataBlock, char* histName,char flag)
@@ -390,16 +429,6 @@ void get_descriptors::ComputeGrayscaleHistogram(unsigned int *HistPtr, unsigned 
 
 			ImgPixelIterator = ImgPixelIterator + 3 ;	// Jump to the next -same color- byte
 		}
-
-			//cout<<"i="<<i<<endl;
-		/*if(flag=='g')
-		{
-			i++;
-		}
-		else if(flag=='b')
-		{
-			i+=2;
-		}*/
 	}
 
 	//SaveToFile(HistPtr, 256, histName) ;
@@ -434,9 +463,7 @@ unsigned long get_descriptors::RetrieveHistKeyValues(unsigned int* histPtr)
 	for(int i = 0 ; i < 5 ; i ++)
 	{
 		iHistTempVal = histPtr[i*32] ;
-		//itoa(iHistTempVal,tempVal,10) ;
-		sprintf(tempVal,"%d",iHistTempVal);
-		//sprintf(iHistTempVal,tempVal,10) ;
+		sprintf(tempVal,"%ld",iHistTempVal);
 		strcat(colorKeyStr, tempVal) ;
 	}
 
@@ -450,121 +477,6 @@ unsigned long get_descriptors::RetrieveHistKeyValues(unsigned int* histPtr)
 	return iHistKeyVal ;
 }
 
-int get_descriptors::dominantColor(int frameCount, unsigned char* vidDataBlock, char * vidFileName)
-{
-	cout<<"buzz"<<endl;
-	//unsigned char* byteIterator = vidDataBlock ;
-	int tempByteValue = 0,tempByteValue1=0,tempByteValue2=0,tempByteValue3=0 ;
-	unsigned long i = 0;
-	int count=0;
-	unsigned char *ImgPixelIterator = vidDataBlock ;
-	unsigned int HistPtr[FRAME_MEM_SIZE];
-
-		InitializeHistArray(HistPtr) ;
-
-		for(i = 0; i < (FRAME_MEM_SIZE) ; i++)			// i+3 skips the other 2 colors bytes
-		{
-			/*tempByteValue1 = (int)*ImgPixelIterator ;	//retrieve the value of each byte
-			tempByteValue2 = (int)*(ImgPixelIterator+1) ;
-			tempByteValue3 = (int)*(ImgPixelIterator+2) ;
-			tempByteValue=(tempByteValue1+tempByteValue2+tempByteValue3)/3;*/
-			//tempByteValue = ((tempByteValue1&0x0ff)<<16)|((tempByteValue2&0x0ff)<<8)|(tempByteValue3&0x0ff);
-			tempByteValue1 = (int)*ImgPixelIterator ;
-			HistPtr[tempByteValue] ++ ;					//increment by one the corresponding value in the histogram
-
-			if((ImgPixelIterator + 3) != nullptr)
-			{
-				ImgPixelIterator = ImgPixelIterator + 3 ;	// Jump to the next -same color- byte
-			}
-
-
-			count++ ;
-		}
-
-		cout<<"count="<<count<<endl;
-	Mat A(180, 240, CV_8UC1,DataType<int>::type);
-	//A.create(180, 240, CV_8UC3);
-	//imshow("x",A);
-	int k=0;
-
-	for(int i=0;i<180;i++)
-	{
-		for(int j=0;j<240;j++)
-		{
-
-			/*r=	(int)*byteIterator;
-
-			g=	(int)*byteIterator;
-
-			b=	(int)*byteIterator;
-
-			rgb = ((r&0x0ff)<<16)|((g&0x0ff)<<8)|(b&0x0ff);*/
-
-			A.at<int>(i,j)=HistPtr[k];
-			//cout<<"i="<<i<<"j="<<j<<"hist="<<HistPtr[k];
-			k++;
-		}
-		//cout<<rgb<<endl;
-	}
-	//cout<<"Here"<<A<<endl;
-	//imshow("x",A);
-	 Mat image_hsv;
-
-	 //Mat image_hsv(180, 240, CV_8UC3,DataType<long>::type);
-	 cvtColor(A, image_hsv, CV_BGR2HSV);
-	 // Quanta Ratio
-	     int scale = 10;
-
-	     int hbins = 36, sbins = 25, vbins = 25;
-	     int histSize[] = {hbins, sbins, vbins};
-
-	     float hranges[] = { 0, 180 };
-	     float sranges[] = { 0, 256 };
-	     float vranges[] = { 0, 256 };
-
-	     const float* ranges[] = { hranges, sranges, vranges };
-	     MatND hist;
-
-	     int channels[] = {0, 1, 2};
-
-	     calcHist( &image_hsv, 1, channels, Mat(), // do not use mask
-	              hist, 3, histSize, ranges,
-	              true, // the histogram is uniform
-	              false );
-
-	     int maxVal = 0;
-
-	     int hue = 0;
-	     int saturation = 0;
-	     int value = 0;
-
-	     for( int h = 0; h < hbins; h++ )
-	     {
-	         for( int s = 0; s < sbins; s++ )
-	         {
-	              for( int v = 0; v < vbins; v++ )
-	                 {
-	                       int binVal = hist.at<int>(h, s, v);
-	                       if(binVal > maxVal)
-	                       {
-	                           maxVal = binVal;
-
-	                           hue = h;
-	                           saturation = s;
-	                           value = v;
-	                       }
-	                 }
-	         }
-	     }
-
-	     hue = hue * scale; // angle 0 - 360
-	     saturation = saturation * scale; // 0 - 255
-	     value = value * scale; // 0 - 255
-
-	cout<<maxVal<<endl;
-}
-
-
 int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, char * vidFileName)
 {
 	cout<<"buzz"<<endl;
@@ -576,21 +488,16 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		unsigned int GHistogram[256] ;
 		unsigned int BHistogram[256] ;
 
-		unsigned long* HistKeyArray = new unsigned long[frameCount*3] ;
+		//unsigned long* HistKeyArray = new unsigned long[frameCount*3] ;
+		double HistKeyArray[150];
+		//double finalbar[150];
 		unsigned long colorKey = 0 ;
 
 		int iRKey = 0 ;
 		int iGKey = 0 ;
 		int iBKey = 0 ;
 		unsigned int rgb;
-
-		// Build output filename
-		/*char* filename = new char[100] ;
-		memcpy(filename, (strtok(file,".")), 30) ;
-		strcat(filename, "Color.txt") ;
-
-		cout<<filename<<endl;*/
-
+		/*
 			cout<<"org"<<vidFileName<<endl;
 			char* temp;
 			char* temp1;
@@ -621,18 +528,14 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 
 			totalLine[len1 + len2] = '\0';
 			cout<<"lol"<<endl;
-			cout<<"path= "<<totalLine<<endl;
-
-
-		//filename = "K:\\Academics\\2nd sem\\CSCI576\\assignments\\project\\GUI\\query\\query_color.txt";
-		// Initialize histogram arrays
+			cout<<"path= "<<totalLine<<endl;*/
 
 		InitializeHistArray(RHistogram) ;
 		InitializeHistArray(GHistogram) ;
 		InitializeHistArray(BHistogram) ;
 
 		cout<<"framcnt="<<frameCount<<endl;
-		myfile.open(totalLine,ios::out);
+		//myfile.open("/home/madhuri/db/animation1_color.txt",ios::out);
 
 		for(int i = 0 ; i < frameCount ; i++)
 		{
@@ -657,75 +560,47 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 			rgb = ((iRKey&0x0ff)<<16)|((iGKey&0x0ff)<<8)|(iBKey&0x0ff);
 			cout<<"rgb="<<rgb<<"i="<<i<<endl;
 			HistKeyArray[i] = rgb ;
-			myfile<<rgb<<endl;
-
-			//HistKeyArray[i] = colorKey ;//Al code
-
-			/*HistKeyArray[i] = iRKey; //NL
-			HistKeyArray[i + frameCount] = iGKey; //NL
-			HistKeyArray[i + 2 * frameCount] = iBKey; //NL*/
-			//cout<<"lol"<<endl;
 
 		}
+
+		std::cout << "The largest element is "  << *std::max_element(HistKeyArray,HistKeyArray+150) << '\n';
+		double max=*std::max_element(HistKeyArray,HistKeyArray+150);
+		myfile.open("/home/madhuri/db/animation1_color.txt",ios::out);
+		for(int i=0;i<150;i++)
+		{
+			HistKeyArray[i]=HistKeyArray[i]/max;
+			cout<<HistKeyArray[i]<<endl;
+			myfile << HistKeyArray[i] << endl;
+			//myfile<<rgb<<endl;
+		}
 		myfile.close();
+		//Display barcode
+		Mat A(150, 750, CV_8U,0.0f);
+		A.create(150, 750, CV_8U);
+		int b=0;
+
+		for(int k=0;k<750;k+=5)
+		{
+			cout<<"k="<<k<<endl;
+			for(int i=0;i<150;i++)
+			{
+				for(int j=k;j<5+k;j++)
+					{
+									//cout<<"b="<<j<<endl;
+									//cout<<tray[b]*255<<endl;
+									A.at<uchar>(i,j)= HistKeyArray[b]*255;
+					}
+			}
+							//cout<<"b="<<b<<endl;
+			b++;
+
+		}
+
+		imshow("Color Descriptor",A);
+		waitKey(0);
 
 		//cout<<"lol"<<endl;
 		//SaveToFile((unsigned int*)HistKeyArray, frameCount, totalLine) ;
-
-
-
-	/*Mat src, dst;
-	FILE *name = fopen(file,"rb");
-	//src = imread( "/home/madhuri/Downloads/video_samples/animation1.v576.rgb", 1 );
-	//src = imdecode( "/home/madhuri/Downloads/video_samples/animation1.v576.rgb", 1 );
-	src = VideoCapture('/home/madhuri/Downloads/video_samples/animation1.v576.rgb');
-
-	if( !src.data )
-	  { return -1; }
-
-	vector<Mat> bgr_planes;
-	split( src, bgr_planes );
-	int histSize = 256; //from 0 to 255
-	float range[] = { 0, 256 } ; //the upper boundary is exclusive
-	const float* histRange = { range };
-	bool uniform = true; bool accumulate = false;
-	Mat b_hist, g_hist, r_hist;
-	/// Compute the histograms:
-	calcHist( &bgr_planes[0], 1, 0, Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate );
-	calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate );
-	calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate );
-
-	// Draw the histograms for R, G and B
-	int hist_w = 512; int hist_h = 400;
-	int bin_w = cvRound( (double) hist_w/histSize );
-
-	Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
-
-	/// Normalize the result to [ 0, histImage.rows ]
-	normalize(b_hist, b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-	normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-	normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-	cout<<g_hist;
-
-	/// Draw for each channel
-	  for( int i = 1; i < histSize; i++ )
-	  {
-	      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ) ,
-	                       Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
-	                       Scalar( 255, 0, 0), 2, 8, 0  );
-	      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ) ,
-	                       Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
-	                       Scalar( 0, 255, 0), 2, 8, 0  );
-	      line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ) ,
-	                       Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
-	                       Scalar( 0, 0, 255), 2, 8, 0  );
-	  }
-
-	  /// Display
-	  namedWindow("calcHist Demo", CV_WINDOW_AUTOSIZE);
-	  imshow("calcHist Demo", histImage );
-
-	  waitKey(0);*/
 
 	  return 0;
 }
@@ -733,5 +608,5 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 int main(int argc, char *argv[])
 {
 	get_descriptors desc;
-	desc.frame(argc,argv[1]);
+	desc.frame(argc,argv[1],argv[2]);
 }
