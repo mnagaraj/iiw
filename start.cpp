@@ -41,8 +41,9 @@ class get_descriptors
 				int frame(int,char*);
 				void AnalyzeMotion(int,unsigned char*,char *);
 				int AnalyzeColor(int, unsigned char*, char*) ;
+				int dominantColor(int, unsigned char*, char*) ;
 				void InitializeHistArray(unsigned int *);
-				void ComputeGrayscaleHistogram(unsigned int *, unsigned char *,  char* );
+				void ComputeGrayscaleHistogram(unsigned int *, unsigned char *,  char*,char );
 				unsigned long RetrieveHistKeyValues(unsigned int* );
 				void SaveToFile(unsigned int* ,int, char* );
 };
@@ -72,7 +73,7 @@ int get_descriptors::frame(int count,char* file)
 	fseek (vidFile , 0 , SEEK_END);
 	long vidSize = ftell (vidFile);
 	rewind (vidFile);
-
+	cout<<"size="<<vidSize<<endl;
 	vidMemSize = vidSize ;
 	vidDataBlock = (unsigned char*) calloc(vidSize + 1, sizeof(char));
 	if(vidDataBlock == NULL)
@@ -97,7 +98,8 @@ int get_descriptors::frame(int count,char* file)
 	char*temp;
 	temp = new char[x.size() + 1];
 	memcpy(temp, x.c_str(), x.size() + 1);
-	AnalyzeColor(frameCount,vidDataBlock,filename);
+	//dominantColor(frameCount,vidDataBlock,filename);
+	AnalyzeColor(frameCount,vidDataBlock,file);
 	printf("\n\n\n::: Video Processing metrics :::\n\n");
 	printf("%s%s%s", "Video filename: ", filename, "\n");
 	printf("%s%f%s", "Video duration: ", (double)frameCount / 30.0, "\n");
@@ -107,6 +109,8 @@ int get_descriptors::frame(int count,char* file)
 	//printf("%s%f%s", "Feature extraction time per frame: ", execTime/frameCount, " ms\n");
 	return 0;
 }
+
+
 
 void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock, char* vidFileName)
 {
@@ -353,10 +357,10 @@ void get_descriptors::SaveToFile(unsigned int *FilePtr, int frameCount,  char* H
 	{
 		//fprintf(HistFile,"%d\r\n",FilePtr[i]);
 
-		myfile<<FilePtr[i]<<endl;
+		myfile<<*(FilePtr+i)<<endl;
 		// added code to write to console
 
-		cout<<"Frame "<<i<<":"<<FilePtr[i]<<endl;
+		cout<<"Frame "<<i<<":"<<*(FilePtr+i)<<endl;
 		//printf("%s%d%s", "Frame ", i, ": ", FilePtr[i], "\n");
 
 		// added code to write to XML
@@ -368,7 +372,7 @@ void get_descriptors::SaveToFile(unsigned int *FilePtr, int frameCount,  char* H
 	cout<<"here";
 }
 
-void get_descriptors::ComputeGrayscaleHistogram(unsigned int *HistPtr, unsigned char *vidDataBlock, char* histName)
+void get_descriptors::ComputeGrayscaleHistogram(unsigned int *HistPtr, unsigned char *vidDataBlock, char* histName,char flag)
 {
 	int tempByteValue = 0 ;
 	unsigned long i = 0 ;
@@ -381,11 +385,21 @@ void get_descriptors::ComputeGrayscaleHistogram(unsigned int *HistPtr, unsigned 
 		tempByteValue = (int)*ImgPixelIterator ;	//retrieve the value of each byte
 		HistPtr[tempByteValue] ++ ;					//increment by one the corresponding value in the histogram
 
-		if((ImgPixelIterator + 1) != nullptr)
+		if((ImgPixelIterator + 3) != nullptr)
 		{
-			ImgPixelIterator = ImgPixelIterator + 1 ;	// Jump to the next -same color- byte
+
+			ImgPixelIterator = ImgPixelIterator + 3 ;	// Jump to the next -same color- byte
 		}
-		i++ ;
+
+			//cout<<"i="<<i<<endl;
+		/*if(flag=='g')
+		{
+			i++;
+		}
+		else if(flag=='b')
+		{
+			i+=2;
+		}*/
 	}
 
 	//SaveToFile(HistPtr, 256, histName) ;
@@ -436,11 +450,127 @@ unsigned long get_descriptors::RetrieveHistKeyValues(unsigned int* histPtr)
 	return iHistKeyVal ;
 }
 
+int get_descriptors::dominantColor(int frameCount, unsigned char* vidDataBlock, char * vidFileName)
+{
+	cout<<"buzz"<<endl;
+	//unsigned char* byteIterator = vidDataBlock ;
+	int tempByteValue = 0,tempByteValue1=0,tempByteValue2=0,tempByteValue3=0 ;
+	unsigned long i = 0;
+	int count=0;
+	unsigned char *ImgPixelIterator = vidDataBlock ;
+	unsigned int HistPtr[FRAME_MEM_SIZE];
+
+		InitializeHistArray(HistPtr) ;
+
+		for(i = 0; i < (FRAME_MEM_SIZE) ; i++)			// i+3 skips the other 2 colors bytes
+		{
+			/*tempByteValue1 = (int)*ImgPixelIterator ;	//retrieve the value of each byte
+			tempByteValue2 = (int)*(ImgPixelIterator+1) ;
+			tempByteValue3 = (int)*(ImgPixelIterator+2) ;
+			tempByteValue=(tempByteValue1+tempByteValue2+tempByteValue3)/3;*/
+			//tempByteValue = ((tempByteValue1&0x0ff)<<16)|((tempByteValue2&0x0ff)<<8)|(tempByteValue3&0x0ff);
+			tempByteValue1 = (int)*ImgPixelIterator ;
+			HistPtr[tempByteValue] ++ ;					//increment by one the corresponding value in the histogram
+
+			if((ImgPixelIterator + 3) != nullptr)
+			{
+				ImgPixelIterator = ImgPixelIterator + 3 ;	// Jump to the next -same color- byte
+			}
+
+
+			count++ ;
+		}
+
+		cout<<"count="<<count<<endl;
+	Mat A(180, 240, CV_8UC1,DataType<int>::type);
+	//A.create(180, 240, CV_8UC3);
+	//imshow("x",A);
+	int k=0;
+
+	for(int i=0;i<180;i++)
+	{
+		for(int j=0;j<240;j++)
+		{
+
+			/*r=	(int)*byteIterator;
+
+			g=	(int)*byteIterator;
+
+			b=	(int)*byteIterator;
+
+			rgb = ((r&0x0ff)<<16)|((g&0x0ff)<<8)|(b&0x0ff);*/
+
+			A.at<int>(i,j)=HistPtr[k];
+			//cout<<"i="<<i<<"j="<<j<<"hist="<<HistPtr[k];
+			k++;
+		}
+		//cout<<rgb<<endl;
+	}
+	//cout<<"Here"<<A<<endl;
+	//imshow("x",A);
+	 Mat image_hsv;
+
+	 //Mat image_hsv(180, 240, CV_8UC3,DataType<long>::type);
+	 cvtColor(A, image_hsv, CV_BGR2HSV);
+	 // Quanta Ratio
+	     int scale = 10;
+
+	     int hbins = 36, sbins = 25, vbins = 25;
+	     int histSize[] = {hbins, sbins, vbins};
+
+	     float hranges[] = { 0, 180 };
+	     float sranges[] = { 0, 256 };
+	     float vranges[] = { 0, 256 };
+
+	     const float* ranges[] = { hranges, sranges, vranges };
+	     MatND hist;
+
+	     int channels[] = {0, 1, 2};
+
+	     calcHist( &image_hsv, 1, channels, Mat(), // do not use mask
+	              hist, 3, histSize, ranges,
+	              true, // the histogram is uniform
+	              false );
+
+	     int maxVal = 0;
+
+	     int hue = 0;
+	     int saturation = 0;
+	     int value = 0;
+
+	     for( int h = 0; h < hbins; h++ )
+	     {
+	         for( int s = 0; s < sbins; s++ )
+	         {
+	              for( int v = 0; v < vbins; v++ )
+	                 {
+	                       int binVal = hist.at<int>(h, s, v);
+	                       if(binVal > maxVal)
+	                       {
+	                           maxVal = binVal;
+
+	                           hue = h;
+	                           saturation = s;
+	                           value = v;
+	                       }
+	                 }
+	         }
+	     }
+
+	     hue = hue * scale; // angle 0 - 360
+	     saturation = saturation * scale; // 0 - 255
+	     value = value * scale; // 0 - 255
+
+	cout<<maxVal<<endl;
+}
+
 
 int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, char * vidFileName)
 {
 	cout<<"buzz"<<endl;
 	unsigned char* byteIterator = vidDataBlock ;
+	ofstream myfile;
+
 
 		unsigned int RHistogram[256] ;
 		unsigned int GHistogram[256] ;
@@ -452,6 +582,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		int iRKey = 0 ;
 		int iGKey = 0 ;
 		int iBKey = 0 ;
+		unsigned int rgb;
 
 		// Build output filename
 		/*char* filename = new char[100] ;
@@ -472,7 +603,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 			    temp = strtok(NULL, "/");
 			}
 			cout<<"temo:"<<temp1<<endl;
-			strcat(temp1, "_testcolour.txt") ;
+			strcat(temp1, "_colour.txt") ;
 			cout << temp1<<endl;
 			char* x;
 			x="/home/madhuri/db/";
@@ -500,30 +631,46 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		InitializeHistArray(GHistogram) ;
 		InitializeHistArray(BHistogram) ;
 
+		cout<<"framcnt="<<frameCount<<endl;
+		myfile.open(totalLine,ios::out);
+
 		for(int i = 0 ; i < frameCount ; i++)
 		{
-			ComputeGrayscaleHistogram(RHistogram, byteIterator, "/home/madhuri/db/RedHist.txt") ;							// RED Histogram
-			ComputeGrayscaleHistogram(GHistogram, byteIterator + FRAME_MEM_SIZE/3, "/home/madhuri/db/GreenHist.txt") ;		// GREEN Histogram
-			ComputeGrayscaleHistogram(BHistogram, byteIterator + FRAME_MEM_SIZE/3*2, "/home/madhuri/db/BlueHist.txt") ;		// BLUE Histogram
+			//cout<<"itr:"<<(void*)byteIterator<<endl;
+			ComputeGrayscaleHistogram(RHistogram, byteIterator, "/home/madhuri/db/RedHist.txt",'r') ;							// RED Histogram
 
+			//cout<<"itr:"<<(void*)byteIterator<<endl;
+			//cout<<"itr:"<<(void*)byteIterator+FRAME_MEM_SIZE/3<<endl;
+			ComputeGrayscaleHistogram(GHistogram, byteIterator+1, "/home/madhuri/db/GreenHist.txt",'g') ;		// GREEN Histogram
+			//cout<<"beforei="<<i<<endl;
+			ComputeGrayscaleHistogram(BHistogram, byteIterator+2, "/home/madhuri/db/BlueHist.txt",'b') ;		// BLUE Histogram
+
+			//cout<<"i="<<i<<endl;
 			byteIterator = byteIterator + FRAME_MEM_SIZE ;
 
 			iRKey = RetrieveHistKeyValues(RHistogram) ;
 			iGKey = RetrieveHistKeyValues(GHistogram) ;
 			iBKey = RetrieveHistKeyValues(BHistogram) ;
-			cout<<"count:"<<i<<endl;
+			//cout<<"count:"<<i<<endl;
 			colorKey = iRKey + iGKey + iBKey ; //Al code
+			//cout<<"i="<<i<<"r="<<iRKey<<"g="<<iGKey<<"b="<<iBKey<<endl;
+			rgb = ((iRKey&0x0ff)<<16)|((iGKey&0x0ff)<<8)|(iBKey&0x0ff);
+			cout<<"rgb="<<rgb<<"i="<<i<<endl;
+			HistKeyArray[i] = rgb ;
+			myfile<<rgb<<endl;
 
-			HistKeyArray[i] = colorKey ;//Al code
+			//HistKeyArray[i] = colorKey ;//Al code
 
 			/*HistKeyArray[i] = iRKey; //NL
 			HistKeyArray[i + frameCount] = iGKey; //NL
 			HistKeyArray[i + 2 * frameCount] = iBKey; //NL*/
 			//cout<<"lol"<<endl;
-		}
 
-		cout<<"lol"<<endl;
-		SaveToFile((unsigned int*)HistKeyArray, frameCount, totalLine) ;
+		}
+		myfile.close();
+
+		//cout<<"lol"<<endl;
+		//SaveToFile((unsigned int*)HistKeyArray, frameCount, totalLine) ;
 
 
 
