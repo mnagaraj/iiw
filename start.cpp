@@ -11,6 +11,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include <opencv/highgui.h>
+#include "helper.h"
 
 #define IMG_H						180
 #define	IMG_W						240
@@ -122,8 +123,8 @@ int get_descriptors::frame(int count,char* file,char* audiofile)
 	char*temp;
 	temp = new char[x.size() + 1];
 	memcpy(temp, x.c_str(), x.size() + 1);
-	AnalyzeColor(frameCount,vidDataBlock,file);
-	AnalyzeAudio(audiofile);
+	//AnalyzeColor(frameCount,vidDataBlock,file);
+	//AnalyzeAudio(audiofile);
 	printf("\n\n\n::: Video Processing metrics :::\n\n");
 	printf("%s%s%s", "Video filename: ", filename, "\n");
 	printf("%s%f%s", "Video duration: ", (double)frameCount / 30.0, "\n");
@@ -143,6 +144,7 @@ int get_descriptors::AnalyzeAudio(char* name)
 			cout<<name<<endl;
 
 		FILE * infile = fopen("/home/madhuri/Downloads/audio_wav/animation1.wav","rb");		// Open wave file in read mode
+		//FILE * infile = fopen("/home/madhuri/Downloads/testing/interview_test.wav","rb");		// Open wave file in read mode
 		double bucket[128];
 		int BUFSIZE = 256;					// BUFSIZE can be changed according to the frame size required (eg:512)
 		int count = 0;						// For counting number of frames in wave file.
@@ -233,14 +235,15 @@ int get_descriptors::AnalyzeAudio(char* name)
 			totalLine[len1 + len2] = '\0';
 
 			cout<<"path= "<<totalLine;
-			myFile1.open("/home/madhuri/db/animation1_audio.txt",ios::out);
+			myFile1.open("/home/madhuri/db/audio_desc/animation1_audio.txt",ios::out);
 		std::cout << "The largest element is "  << *std::max_element(bucket,bucket+128) << '\n';
 		double max=*std::max_element(bucket,bucket+128);
 		for(int i=0;i<128;i++)
 		{
+			myFile1 << bucket[i] << endl;
 			bucket[i]=bucket[i]/max;
 			cout<<bucket[i]<<endl;
-			myFile1 << bucket[i] << endl;
+
 		}
 	}
 
@@ -357,14 +360,14 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 	}
 	    cout << "The biggest number is: " << t << endl;
 
-	    myfile2.open("/home/madhuri/db/animation1_motion.txt",ios::out);
+	    myfile2.open("/home/madhuri/db/drama_test_motion.txt",ios::out);
 
 	for(int i=0;i<150;i++)
 	{
 		tray[i]=(double)MotionIndexArray[i]/(double)t;
 		//cout<<MotionIndexArray[i]<<endl;
 		cout<<tray[i]<<endl;
-		myfile2<<tray[i]<<endl;
+		myfile2<<MotionIndexArray[i]<<endl;
 
 	}
 	myfile2.close();
@@ -463,16 +466,19 @@ unsigned long get_descriptors::RetrieveHistKeyValues(unsigned int* histPtr)
 	for(int i = 0 ; i < 5 ; i ++)
 	{
 		iHistTempVal = histPtr[i*32] ;
-		sprintf(tempVal,"%ld",iHistTempVal);
+		sprintf(tempVal,"%d",iHistTempVal);
+		//cout<<"ihisttempval="<<iHistTempVal<<"tempval="<<tempVal<<endl;
 		strcat(colorKeyStr, tempVal) ;
 	}
 
 	if(strlen(colorKeyStr) > COLOR_KEY_SIZE)
 	{
 		strncpy(colorKeyTrunc, colorKeyStr, COLOR_KEY_SIZE) ;
+		//cout<<"colortrunc="<<colorKeyTrunc<<endl;
 	}
 
 	iHistKeyVal = atoi(colorKeyTrunc) ;
+	//cout<<"val="<<iHistKeyVal<<endl;
 
 	return iHistKeyVal ;
 }
@@ -535,7 +541,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		InitializeHistArray(BHistogram) ;
 
 		cout<<"framcnt="<<frameCount<<endl;
-		//myfile.open("/home/madhuri/db/animation1_color.txt",ios::out);
+		myfile.open("/home/madhuri/db/interview_test_color.txt",ios::out);
 
 		for(int i = 0 ; i < frameCount ; i++)
 		{
@@ -551,29 +557,46 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 			//cout<<"i="<<i<<endl;
 			byteIterator = byteIterator + FRAME_MEM_SIZE ;
 
+			/*for(int i=0;i<43200;i++)
+			{
+				cout <<RHistogram[i]<<endl;
+			}*/
+			//int x=sizeof(RHistogram) / 4;
+			//cout<<"x="<<x<<endl;
+			//std::cout << "The largest element is "  << *std::max_element(RHistogram,RHistogram+256) << endl;
+
 			iRKey = RetrieveHistKeyValues(RHistogram) ;
 			iGKey = RetrieveHistKeyValues(GHistogram) ;
 			iBKey = RetrieveHistKeyValues(BHistogram) ;
+
+			/*iRKey=*std::max_element(RHistogram,RHistogram+256);
+			iGKey=*std::max_element(GHistogram,GHistogram+256);
+			iBKey=*std::max_element(BHistogram,BHistogram+256);*/
+
+			cout <<"keys:"<< iRKey << ":"<<iGKey <<":" << iBKey <<":"<< endl;
+			myfile << iRKey << ":"<<iGKey <<":" << iBKey << endl;
 			//cout<<"count:"<<i<<endl;
-			colorKey = iRKey + iGKey + iBKey ; //Al code
+			//colorKey = iRKey + iGKey + iBKey ; //Al code
 			//cout<<"i="<<i<<"r="<<iRKey<<"g="<<iGKey<<"b="<<iBKey<<endl;
 			rgb = ((iRKey&0x0ff)<<16)|((iGKey&0x0ff)<<8)|(iBKey&0x0ff);
 			cout<<"rgb="<<rgb<<"i="<<i<<endl;
 			HistKeyArray[i] = rgb ;
-
 		}
+
+		myfile.close();
 
 		std::cout << "The largest element is "  << *std::max_element(HistKeyArray,HistKeyArray+150) << '\n';
 		double max=*std::max_element(HistKeyArray,HistKeyArray+150);
-		myfile.open("/home/madhuri/db/animation1_color.txt",ios::out);
+
+		double trial[150];
 		for(int i=0;i<150;i++)
 		{
-			HistKeyArray[i]=HistKeyArray[i]/max;
+			trial[i]=HistKeyArray[i]/max;
 			cout<<HistKeyArray[i]<<endl;
-			myfile << HistKeyArray[i] << endl;
+
 			//myfile<<rgb<<endl;
 		}
-		myfile.close();
+
 		//Display barcode
 		Mat A(150, 750, CV_8U,0.0f);
 		A.create(150, 750, CV_8U);
@@ -588,7 +611,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 					{
 									//cout<<"b="<<j<<endl;
 									//cout<<tray[b]*255<<endl;
-									A.at<uchar>(i,j)= HistKeyArray[b]*255;
+									A.at<uchar>(i,j)= trial[b]*255;
 					}
 			}
 							//cout<<"b="<<b<<endl;
@@ -608,5 +631,8 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 int main(int argc, char *argv[])
 {
 	get_descriptors desc;
-	desc.frame(argc,argv[1],argv[2]);
+
+	//cout<<"x="<<x<<endl;
+	//desc.frame(argc,argv[1],argv[2]);
+	help();
 }
