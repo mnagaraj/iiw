@@ -80,8 +80,8 @@ int get_descriptors::frame(int count,char* file,char* audiofile)
 		return 1 ;
 	}
 
-	cout << file <<endl;
-	cout <<audiofile<<endl;
+	//cout << file <<endl;
+	//cout <<audiofile<<endl;
 	vidFile = fopen(file,"rb");
 	if (vidFile == NULL)
 	{
@@ -90,15 +90,15 @@ int get_descriptors::frame(int count,char* file,char* audiofile)
 	}
 
 	char * filename;
-	char * audio;
+	//char * audio;
 	filename = strtok (file,".") ;
 	//audio = strtok (audiofile,".") ;
-	cout<<"filename= "<<filename<<endl;
+	//cout<<"filename= "<<filename<<endl;
 	//cout<<"audiofilename= "<<audio<<endl;
 	fseek (vidFile , 0 , SEEK_END);
 	long vidSize = ftell (vidFile);
 	rewind (vidFile);
-	cout<<"size="<<vidSize<<endl;
+	//cout<<"size="<<vidSize<<endl;
 	vidMemSize = vidSize ;
 	vidDataBlock = (unsigned char*) calloc(vidSize + 1, sizeof(char));
 	if(vidDataBlock == NULL)
@@ -123,8 +123,8 @@ int get_descriptors::frame(int count,char* file,char* audiofile)
 	char*temp;
 	temp = new char[x.size() + 1];
 	memcpy(temp, x.c_str(), x.size() + 1);
-	//AnalyzeColor(frameCount,vidDataBlock,file);
-	//AnalyzeAudio(audiofile);
+	AnalyzeColor(frameCount,vidDataBlock,file);
+	AnalyzeAudio(audiofile);
 	printf("\n\n\n::: Video Processing metrics :::\n\n");
 	printf("%s%s%s", "Video filename: ", filename, "\n");
 	printf("%s%f%s", "Video duration: ", (double)frameCount / 30.0, "\n");
@@ -141,10 +141,11 @@ int get_descriptors::AnalyzeAudio(char* name)
 		ofstream myFile1,myFiletemp;
 
 			myFiletemp.open("mizi.txt",ios::out);
-			cout<<name<<endl;
+			//cout<<name<<endl;
 
-		FILE * infile = fopen("/home/madhuri/Downloads/audio_wav/animation1.wav","rb");		// Open wave file in read mode
-		//FILE * infile = fopen("/home/madhuri/Downloads/testing/interview_test.wav","rb");		// Open wave file in read mode
+		FILE * infile = fopen("/home/madhuri/Downloads/audio_wav/sports2.wav","rb");		// Open wave file in read mode
+		//FILE * infile = fopen("/home/madhuri/Desktop/query.wav","rb"); //Open wave file for QUERY VIDEO
+		//FILE * infile = fopen("/home/madhuri/Downloads/testing/sports_test.wav","rb");		// Open wave file for TEST FOLDER
 		double bucket[128];
 		int BUFSIZE = 256;					// BUFSIZE can be changed according to the frame size required (eg:512)
 		int count = 0;						// For counting number of frames in wave file.
@@ -158,14 +159,14 @@ int get_descriptors::AnalyzeAudio(char* name)
 			//fwrite(meta,1, sizeof(*meta), outfile);
 
 
-			cout << "first chunk is :" << sizeof(meta->chunk_id) << " bytes in size" << endl;
+			/*cout << "first chunk is :" << sizeof(meta->chunk_id) << " bytes in size" << endl;
 			cout << "The file is a :" << meta->chunk_id << " format" << endl;
 			cout << " Size of Header file is "<<sizeof(*meta)<<" bytes" << endl;
 			cout << " Sampling rate of the input wave file is "<< meta->sample_rate <<" Hz" << endl;
 			cout << " Number of bits per sample is: "<< meta->bits_per_sample <<"bits" << endl;
 			cout << " Size of data in the audio is: " << sizeof(meta->subchunk2_size)<< " bytes" << endl;
 			cout << " The number of channels of the file is "<< meta->num_channels << " channels" << endl;
-			cout << " The audio format is PCM:"<< meta->audio_format << endl;
+			cout << " The audio format is PCM:"<< meta->audio_format << endl;*/
 	        //cout << " The size of actual data is "<< sizeof(meta->data) << "bytes" << endl;
 
 
@@ -187,7 +188,7 @@ int get_descriptors::AnalyzeAudio(char* name)
 			}
 
 
-		cout << " Number of frames in the input wave file are " <<count << endl;
+		//cout << " Number of frames in the input wave file are " <<count << endl;
 
 		std::ifstream infile("mizi.txt");
 		double a;
@@ -218,9 +219,9 @@ int get_descriptors::AnalyzeAudio(char* name)
 			    temp1=temp;
 			    temp = strtok(NULL, "/");
 			}
-			cout<<"temo:"<<temp1<<endl;
+			//cout<<"temo:"<<temp1<<endl;
 			strcat(temp1, "_audio.txt") ;
-			cout << temp1<<endl;
+			//cout << temp1<<endl;
 			char* x;
 			x="/home/madhuri/db/";
 			//cout<<x<<temp1;
@@ -234,15 +235,17 @@ int get_descriptors::AnalyzeAudio(char* name)
 			memcpy(totalLine + len1, temp1, len2);
 			totalLine[len1 + len2] = '\0';
 
-			cout<<"path= "<<totalLine;
-			myFile1.open("/home/madhuri/db/audio_desc/animation1_audio.txt",ios::out);
-		std::cout << "The largest element is "  << *std::max_element(bucket,bucket+128) << '\n';
+			//cout<<"path= "<<totalLine;
+			myFile1.open("/home/madhuri/db/audio_desc/sports2_audio.txt",ios::out);
+			//myFile1.open("/home/madhuri/db/sports_test_audio.txt",ios::out); //FOR TEST FOLDER
+			//myFile1.open("/home/madhuri/db/result/query_audio.txt",ios::out); //FOR QUERY VIDEO SAVING
+		//std::cout << "The largest element is "  << *std::max_element(bucket,bucket+128) << '\n';
 		double max=*std::max_element(bucket,bucket+128);
 		for(int i=0;i<128;i++)
 		{
 			myFile1 << bucket[i] << endl;
 			bucket[i]=bucket[i]/max;
-			cout<<bucket[i]<<endl;
+			//cout<<bucket[i]<<endl;
 
 		}
 	}
@@ -253,7 +256,7 @@ int get_descriptors::AnalyzeAudio(char* name)
 			{
 				tray[i]= bucket[i];
 				//cout<<MotionIndexArray[i]<<endl;
-				cout<<tray[i]<<endl;
+				//cout<<tray[i]<<endl;
 			}
 
 		Mat A(150, 640, CV_8U,0.0f);
@@ -262,7 +265,7 @@ int get_descriptors::AnalyzeAudio(char* name)
 
 			for(int k=0;k<640;k+=5)
 			{
-				cout<<"k="<<k<<endl;
+				//cout<<"k="<<k<<endl;
 				for(int i=0;i<150;i++)
 				{
 					for(int j=k;j<5+k;j++)
@@ -272,7 +275,7 @@ int get_descriptors::AnalyzeAudio(char* name)
 						A.at<uchar>(i,j)= tray[b]*255;
 					}
 				}
-				cout<<"b="<<b<<endl;
+				//cout<<"b="<<b<<endl;
 				b++;
 
 			}
@@ -311,9 +314,9 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 	    temp1=temp;
 	    temp = strtok(NULL, "/");
 	}
-	cout<<"temo:"<<temp1<<endl;
+	//cout<<"temo:"<<temp1<<endl;
 	strcat(temp1, "_motion.txt") ;
-	cout << temp1<<endl;
+	//cout << temp1<<endl;
 	char* x;
 	x="/home/madhuri/db/";
 	//cout<<x<<temp1;
@@ -327,7 +330,7 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 	memcpy(totalLine + len1, temp1, len2);
 	totalLine[len1 + len2] = '\0';
 
-	cout<<"path= "<<totalLine;
+	//cout<<"path= "<<totalLine;
 	for(int i = 0 ; i < (frameCount - 1) ; i++)
 	{
 
@@ -358,15 +361,17 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 		  t=MotionIndexArray[i];
 	  }
 	}
-	    cout << "The biggest number is: " << t << endl;
+	    //cout << "The biggest number is: " << t << endl;
 
-	    myfile2.open("/home/madhuri/db/drama_test_motion.txt",ios::out);
+	    myfile2.open("/home/madhuri/db/motion_desc/sports2_motion.txt",ios::out);
+	    //myfile2.open("/home/madhuri/db/sports_test_motion.txt",ios::out);  //FOR TEST FOLDER
+	    //myfile2.open("/home/madhuri/db/result/query_motion.txt",ios::out); //FOR QUERY VIDEO
 
 	for(int i=0;i<150;i++)
 	{
 		tray[i]=(double)MotionIndexArray[i]/(double)t;
 		//cout<<MotionIndexArray[i]<<endl;
-		cout<<tray[i]<<endl;
+		//cout<<tray[i]<<endl;
 		myfile2<<MotionIndexArray[i]<<endl;
 
 	}
@@ -378,7 +383,7 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 
 	for(int k=0;k<750;k+=5)
 	{
-		cout<<"k="<<k<<endl;
+		//cout<<"k="<<k<<endl;
 		for(int i=0;i<150;i++)
 		{
 			for(int j=k;j<5+k;j++)
@@ -388,7 +393,7 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 				A.at<uchar>(i,j)= tray[b]*255;
 			}
 		}
-		cout<<"b="<<b<<endl;
+		//cout<<"b="<<b<<endl;
 		b++;
 
 	}
@@ -399,7 +404,7 @@ void get_descriptors::AnalyzeMotion(int frameCount, unsigned char* vidDataBlock,
 
 void get_descriptors::SaveToFile(unsigned int *FilePtr, int frameCount,  char* HistFileName)
 {
-	cout<<HistFileName<<endl;
+	//cout<<HistFileName<<endl;
 	ofstream myfile;
 	myfile.open(HistFileName,ios::out | ios::app);
 
@@ -408,7 +413,7 @@ void get_descriptors::SaveToFile(unsigned int *FilePtr, int frameCount,  char* H
 		for(int i = 0; i < frameCount; i++)
 		{
 			myfile<<*(FilePtr+i)<<endl;
-			cout<<"Frame "<<i<<":"<<*(FilePtr+i)<<endl;
+			//cout<<"Frame "<<i<<":"<<*(FilePtr+i)<<endl;
 		}
 	}
 	myfile.close();
@@ -485,7 +490,7 @@ unsigned long get_descriptors::RetrieveHistKeyValues(unsigned int* histPtr)
 
 int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, char * vidFileName)
 {
-	cout<<"buzz"<<endl;
+	//cout<<"buzz"<<endl;
 	unsigned char* byteIterator = vidDataBlock ;
 	ofstream myfile;
 
@@ -540,8 +545,10 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		InitializeHistArray(GHistogram) ;
 		InitializeHistArray(BHistogram) ;
 
-		cout<<"framcnt="<<frameCount<<endl;
-		myfile.open("/home/madhuri/db/interview_test_color.txt",ios::out);
+		//cout<<"framcnt="<<frameCount<<endl;
+		myfile.open("/home/madhuri/db/color_desc/sports2_color.txt",ios::out);
+		//myfile.open("/home/madhuri/db/sports_test_color.txt",ios::out);  //FOR TEST FOLDER
+		//myfile.open("/home/madhuri/db/result/query_color.txt",ios::out);	//FOR QUERY VIDEO
 
 		for(int i = 0 ; i < frameCount ; i++)
 		{
@@ -573,26 +580,26 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 			iGKey=*std::max_element(GHistogram,GHistogram+256);
 			iBKey=*std::max_element(BHistogram,BHistogram+256);*/
 
-			cout <<"keys:"<< iRKey << ":"<<iGKey <<":" << iBKey <<":"<< endl;
+			//cout <<"keys:"<< iRKey << ":"<<iGKey <<":" << iBKey <<":"<< endl;
 			myfile << iRKey << ":"<<iGKey <<":" << iBKey << endl;
 			//cout<<"count:"<<i<<endl;
 			//colorKey = iRKey + iGKey + iBKey ; //Al code
 			//cout<<"i="<<i<<"r="<<iRKey<<"g="<<iGKey<<"b="<<iBKey<<endl;
 			rgb = ((iRKey&0x0ff)<<16)|((iGKey&0x0ff)<<8)|(iBKey&0x0ff);
-			cout<<"rgb="<<rgb<<"i="<<i<<endl;
+			//cout<<"rgb="<<rgb<<"i="<<i<<endl;
 			HistKeyArray[i] = rgb ;
 		}
 
 		myfile.close();
 
-		std::cout << "The largest element is "  << *std::max_element(HistKeyArray,HistKeyArray+150) << '\n';
+		//std::cout << "The largest element is "  << *std::max_element(HistKeyArray,HistKeyArray+150) << '\n';
 		double max=*std::max_element(HistKeyArray,HistKeyArray+150);
 
 		double trial[150];
 		for(int i=0;i<150;i++)
 		{
 			trial[i]=HistKeyArray[i]/max;
-			cout<<HistKeyArray[i]<<endl;
+			//cout<<HistKeyArray[i]<<endl;
 
 			//myfile<<rgb<<endl;
 		}
@@ -604,7 +611,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 
 		for(int k=0;k<750;k+=5)
 		{
-			cout<<"k="<<k<<endl;
+			//cout<<"k="<<k<<endl;
 			for(int i=0;i<150;i++)
 			{
 				for(int j=k;j<5+k;j++)
@@ -620,6 +627,7 @@ int get_descriptors::AnalyzeColor(int frameCount, unsigned char* vidDataBlock, c
 		}
 
 		imshow("Color Descriptor",A);
+
 		waitKey(0);
 
 		//cout<<"lol"<<endl;
@@ -633,6 +641,6 @@ int main(int argc, char *argv[])
 	get_descriptors desc;
 
 	//cout<<"x="<<x<<endl;
-	//desc.frame(argc,argv[1],argv[2]);
+	//desc.frame(argc,argv[1],argv[2]);	//COMMENT FOR QUERY MATCHING
 	help();
 }
