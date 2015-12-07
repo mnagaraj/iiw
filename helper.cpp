@@ -30,14 +30,14 @@ void comparison(double* audio,double* video,double* color,string filename[])
 	double temp[15];
 	for(int i = 0; i<15 ;i++)
 	{
-		double sum=audio[i]+video[i]+color[i];
+		double sum=audio[i]+video[i]+(1/color[i]);
 		double mean=sum/3.0;
 		final_results[i]=mean;
 		temp[i]=mean;
 	//cout<<audio[i]<<":"<<video[i]<<":"<<color[i]<<endl;
 	//cout<<mean<<endl;
 	}
-	std::cout << "The least element is "  << *std::min_element(final_results,final_results+15) << '\n';
+	//std::cout << "The least element is "  << *std::min_element(final_results,final_results+15) << '\n';
 	std::sort(final_results,final_results+15);
 	int one,two,three,four;
 	for(int k=0;k<15;k++)
@@ -59,10 +59,13 @@ void comparison(double* audio,double* video,double* color,string filename[])
 			four=k;
 		}
 	}
-	cout<<filename[one]<<":"<<one<<endl;
-	cout<<filename[two]<<":"<<two<<endl;
-	cout<<filename[three]<<":"<<three<<endl;
-	cout<<filename[four]<<":"<<four<<endl;
+
+	cout<<"****************QUERY MATCHING RESULTS****************"<<endl;
+	cout<<"MATCH 1 = "<<filename[one]<<endl; //<<":"<<one<<endl;
+	cout<<"MATCH 2 = "<<filename[two]<<endl;  //":"<<two<<endl;
+	cout<<"MATCH 3 = "<<filename[three]<<endl; //":"<<three<<endl;
+	cout<<"MATCH 4 ="<<filename[four]<<endl;  //":"<<four<<endl;
+	cout<<"******************************************************";
 	   /*for (int index = smallestIndex; index < 15; index++) {
 	        if (final_results[smallestIndex] > final_results[index]) {
 	            smallestIndex = index;
@@ -87,7 +90,8 @@ double* compare_audio(string filename[])
  		 const char* p=path.c_str();
  		 //cout<<"path="<<path<<endl;
  		 myfile1.open(p);
- 		 myfile2.open("/home/madhuri/db/interview_test_audio.txt");
+ 		 myfile2.open("/home/madhuri/db/sports_test_audio.txt");
+ 		 //myfile2.open("/home/madhuri/db/result/query_audio.txt"); //FOR QUERY VIDEO
  		 string a,b;
  		 double c,d;
  		 double err=0;
@@ -106,11 +110,11 @@ double* compare_audio(string filename[])
  		 }
  		 //cout<<"Errorr::"<<err<<" Count::"<<count<<endl;
  		 res1[i]=err/count;
- 		 cout<<fixed;
- 		 cout<<res1[i]<<endl;
+ 		 //cout<<fixed;
+ 		 //cout<<res1[i]<<endl;
  	 }
- 	 cout<<fixed;
- 	 std::cout << "The least element is "  << *std::min_element(res1,res1+14) << '\n';
+ 	 //cout<<fixed;
+ 	 //std::cout << "The least element is "  << *std::min_element(res1,res1+14) << '\n';
  	 return res1;
   }
 
@@ -127,7 +131,8 @@ double* compare_video(string filename[])
  		 const char* p=path.c_str();
  		 //cout<<"path="<<path<<endl;
  		 myfile1.open(p);
- 		 myfile2.open("/home/madhuri/db/interview_test_motion.txt");
+ 		 myfile2.open("/home/madhuri/db/sports_test_motion.txt");
+ 		 //myfile2.open("/home/madhuri/db/result/query_motion.txt"); //FOR QUERY VIDEO
  		 string a,b;
  		 double c,d;
  		 double err=0;
@@ -151,8 +156,8 @@ double* compare_video(string filename[])
  		 //cout<<fixed;
  		 //cout<<res[i]<<endl;
  	 }
- 	 cout<<fixed;
- 	 std::cout << "The least element is "  << *std::min_element(res2,res2+15) << '\n';
+ 	 //cout<<fixed;
+ 	 //std::cout << "The least element is "  << *std::min_element(res2,res2+15) << '\n';
  	 return res2;
   }
 
@@ -168,7 +173,8 @@ double* compare_color(string filename[])
  		 const char* p=path.c_str();
  		 //cout<<"path="<<path<<endl;
  		 myfile1.open(p);
- 		 myfile2.open("/home/madhuri/db/interview_test_color.txt");
+ 		 myfile2.open("/home/madhuri/db/sports_test_color.txt");
+ 		 //myfile2.open("/home/madhuri/db/result/query_color.txt"); //FOR QUERY VIDEO
  		 string a,b;
  		 double c,d;
  		 double err=0;
@@ -251,8 +257,8 @@ double* compare_color(string filename[])
  		 //cout<<fixed;
  		 //cout<<res[i]<<endl;
  	 }
- 	 cout<<fixed;
- 	 std::cout << "The least element is "  << *std::min_element(res_color,res_color+15) << '\n';
+ 	 //cout<<fixed;
+ 	 //std::cout << "The least element is "  << *std::min_element(res_color,res_color+15) << '\n';
  	 return res_color;
   }
 
